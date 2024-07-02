@@ -12,7 +12,7 @@ class RegisterView(APIView):
     
     def post(self, request):
         serializer = RegisterSerializer(data=request.data)
-        
+        print(serializer)
         if serializer.is_valid():
             serializer.save()
             return Response({"status":"success"}, status= status.HTTP_201_CREATED)
@@ -24,7 +24,7 @@ class RegisterView(APIView):
                 
             }, status = status.HTTP_400_BAD_REQUEST)
             
-            
+                
 class LoginView(APIView):
     permission_classes = [AllowAny]
     
