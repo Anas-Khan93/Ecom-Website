@@ -11,7 +11,7 @@ pool:
 strategy:
   matrix:
     Python35:
-      PYTHON_VERSION: '3.5'
+      PYTHON_VERSION: '3.12.3'
 
 steps:
 - task: UsePythonVersion@0
