@@ -1,0 +1,27 @@
+#Django 
+Django==3.2.6
+
+# Django Rest Framework
+django-restframework==3.12.4
+
+# Password reset
+django-rest-Passwordreset==1.2.1
+
+# MtySQL connector
+mysqlclient==2.0.3
+django-mysql==3.10.1
+
+# for managing corse headers
+django-cors-headers==3.7.0
+
+# for environment variable management
+python-decouple==3.4
+
+# Unit testing
+unittest-xml-reporting==3.0.4
+
+# pip tools
+pip-tools==6.2.0
+
+# Additional packages you might need 
+requests==2.5.1
