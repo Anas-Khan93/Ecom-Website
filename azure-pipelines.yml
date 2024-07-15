@@ -7,13 +7,37 @@ trigger:
 - master
 
 pool:
-  vmImage: ubuntu-latest
+  vmImage: 'ubuntu-latest'
+
+variables:
+  ENGINE: 'django.db.backends.mysql'
+  NAME: 'interviewaiDB'
+  USER: 'anas'
+  PASSWORD: 'admin@123'
+  HOST: 'interview-ai-server.mysql.database.azure.com'
+  PORT: '3306'
 
 steps:
 - task: UsePythonVersion@0
   inputs:
     versionSpec: '3.12.3'
     architecture: 'x64'
+
+- script: |
+    echo "ENGINE: $ENGINE"
+    echo "NAME: $NAME"
+    echo "USER: $USER"
+    echo "PASSWORD: $PASSWORD"
+    echo "HOST: $HOST"
+    echo "PORT: $PORT"
+  displayName: 'Display environment variables'
+  env:
+    ENGINE: $(ENGINE)
+    NAME: $(NAME)
+    USER: $(USER)
+    PASSWORD: $(PASSWORD)
+    HOST: $(HOST)
+    PORT: $(PORT)
 
 - task: PythonScript@0
   displayName: 'Export project path'
