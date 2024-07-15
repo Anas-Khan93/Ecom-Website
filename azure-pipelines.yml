@@ -1,4 +1,5 @@
 # Python Django
+
 # Test a Django project on multiple versions of Python.
 # Add steps that analyze code, save build artifacts, deploy, and more:
 # https://docs.microsoft.com/azure/devops/pipelines/languages/python
@@ -54,6 +55,7 @@ steps:
       project_location = path.dirname(path.abspath(manage_py))
       print('Found Django project in', project_location)
       print('##vso[task.setvariable variable=projectRoot]{}'.format(project_location))
+  
 
 - script: |
     python -m pip install --upgrade pip setuptools wheel
@@ -71,3 +73,11 @@ steps:
     testResultsFiles: "**/TEST-*.xml"
     testRunTitle: 'Python $(PYTHON_VERSION)'
   condition: succeededOrFailed()
+
+- task: AzureWebApp@1
+  inputs:
+    azureSubscription: 'Azure subscription 1(d6ce5594-50b2-4ddb-b398-864c24bd72c4)'
+    appType: 'webAppLinux'
+    appName: 'interview-ai-webapp'
+    package: '$(System.DefaultWorkingDirectory)/**/*.zip'
+    runtimeStack: 'PYTHON|3.11'
