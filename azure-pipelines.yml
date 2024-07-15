@@ -81,3 +81,6 @@ steps:
     appName: 'interview-ai-webapp'
     package: '$(System.DefaultWorkingDirectory)/**/*.zip'
     runtimeStack: 'PYTHON|3.11'
+    appSettings: 
+
+- task: PublishBuildArtifacts@1
