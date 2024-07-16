@@ -104,5 +104,5 @@ steps:
     appName: 'interview-ai-webapp'
     package: '$(Pipeline.Workspace)/ai_interviewer/ai_interviewer.zip'
     runtimeStack: 'PYTHON|3.11'
-    appSettings: 'ENGINE django.db.backends.mysql -NAME interviewaiDB -USER anas -PASSWORD admin@123 -HOST interview-ai-server.mysql.database.azure.com -PORT 3306'
+    appSettings: '-ENGINE django.db.backends.mysql -NAME interviewaiDB -USER anas -PASSWORD admin@123 -HOST interview-ai-server.mysql.database.azure.com -PORT 3306'
 - task: PublishBuildArtifacts@1
