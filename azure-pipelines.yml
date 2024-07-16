@@ -55,7 +55,6 @@ steps:
       project_location = path.dirname(path.abspath(manage_py))
       print('Found Django project in', project_location)
       print('##vso[task.setvariable variable=projectRoot]{}'.format(project_location))
-  
 
 - script: |
     python -m pip install --upgrade pip setuptools wheel
@@ -74,13 +73,36 @@ steps:
     testRunTitle: 'Python $(PYTHON_VERSION)'
   condition: succeededOrFailed()
 
+- task: ArchiveFiles@2
+  inputs:
+    rootFolderOrFile: '$(Build.SourcesDirectory)/my_project'  # Path to your project
+    includeRootFolder: false
+    archiveType: 'zip'
+    archiveFile: '$(Build.ArtifactStagingDirectory)/my_project.zip'  # Path to save the zip file
+    replaceExistingArchive: true
+
+- task: PublishBuildArtifacts@1
+  inputs:
+    PathtoPublish: '$(Build.ArtifactStagingDirectory)/my_project.zip'
+    ArtifactName: 'my_project'
+
+- task: DownloadBuildArtifacts@0
+  inputs:
+    buildType: 'current'
+    downloadType: 'single'
+    artifactName: 'my_project'
+    downloadPath: '$(Pipeline.Workspace)'
+
+- script: |
+    unzip $(Pipeline.Workspace)/my_project/my_project.zip -d $(Pipeline.Workspace)/my_project
+  displayName: 'Unzip Package'
+
 - task: AzureWebApp@1
   inputs:
     azureSubscription: 'Azure subscription 1(d6ce5594-50b2-4ddb-b398-864c24bd72c4)'
     appType: 'webAppLinux'
     appName: 'interview-ai-webapp'
-    package: '$(System.DefaultWorkingDirectory)/**/*.zip'
+    package: '$(Pipeline.Workspace)/my_project/my_project.zip'
     runtimeStack: 'PYTHON|3.11'
-    appSettings: 
-
+    appSettings:
 - task: PublishBuildArtifacts@1
