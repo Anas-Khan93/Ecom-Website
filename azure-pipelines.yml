@@ -75,26 +75,26 @@ steps:
 
 - task: ArchiveFiles@2
   inputs:
-    rootFolderOrFile: '$(Build.SourcesDirectory)/my_project'  # Path to your project
+    rootFolderOrFile: '$(Build.SourcesDirectory)/ai_interviewer'  # Path to your project
     includeRootFolder: false
     archiveType: 'zip'
-    archiveFile: '$(Build.ArtifactStagingDirectory)/my_project.zip'  # Path to save the zip file
+    archiveFile: '$(Build.ArtifactStagingDirectory)/ai_interviewer.zip'  # Path to save the zip file
     replaceExistingArchive: true
 
 - task: PublishBuildArtifacts@1
   inputs:
-    PathtoPublish: '$(Build.ArtifactStagingDirectory)/my_project.zip'
-    ArtifactName: 'my_project'
+    PathtoPublish: '$(Build.ArtifactStagingDirectory)/ai_interviewer.zip'
+    ArtifactName: 'ai_interviewer'
 
 - task: DownloadBuildArtifacts@0
   inputs:
     buildType: 'current'
     downloadType: 'single'
-    artifactName: 'my_project'
+    artifactName: 'ai_interviewer'
     downloadPath: '$(Pipeline.Workspace)'
 
 - script: |
-    unzip $(Pipeline.Workspace)/my_project/my_project.zip -d $(Pipeline.Workspace)/my_project
+    unzip $(Pipeline.Workspace)/ai_interviewer/ai_interviewer.zip -d $(Pipeline.Workspace)/ai_interviewer
   displayName: 'Unzip Package'
 
 - task: AzureWebApp@1
@@ -102,7 +102,7 @@ steps:
     azureSubscription: 'Azure subscription 1(d6ce5594-50b2-4ddb-b398-864c24bd72c4)'
     appType: 'webAppLinux'
     appName: 'interview-ai-webapp'
-    package: '$(Pipeline.Workspace)/my_project/my_project.zip'
+    package: '$(Pipeline.Workspace)/ai_interviewer/ai_interviewer.zip'
     runtimeStack: 'PYTHON|3.11'
     appSettings:
 - task: PublishBuildArtifacts@1
