@@ -1,6 +1,6 @@
 asgiref==3.8.1
 
-Django==5.0.6
+django==5.0.6
 
 django-rest-passwordreset==1.4.1
 
