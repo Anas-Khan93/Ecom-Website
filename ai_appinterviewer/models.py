@@ -4,6 +4,7 @@ from django.contrib.auth.password_validation import validate_password
 
 # Create your models here.
 
+# USER MODEL:
 class UserProfile(models.Model):
     
     user = models.OneToOneField(User, on_delete=models.CASCADE)
@@ -17,10 +18,13 @@ class UserProfile(models.Model):
     class Meta:
         db_table = 'user_profile'
         managed = True
+
+# THE A.I PLAN MODEL
+# class IdPlan(models.Model):
+#     plan_id = models.IntegerField(null=False, blank=False)
     
-class IdPlan(models.Model):
-    plan_id = models.IntegerField(null=False, blank=False)
-    
-    class Meta:
-        db_table = 'aiplanscheme'
-        managed= True
+#     class Meta:
+#         db_table = 'aiplanscheme'
+#         managed= True
+
+# CHATGPT MODEL:

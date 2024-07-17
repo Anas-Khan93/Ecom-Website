@@ -1,14 +1,18 @@
-# import mysql.connector
+import mysql.connector
+import os
+from dotenv import load_dotenv
 
-# dataBase = mysql.connector.connect(
+load_dotenv()
+
+dataBase = mysql.connector.connect(
     
-#     host = 'localhost',
-#     user = 'root',
-#     passwd = 'anas93'
-# )
+     host= os.getenv("HOST", default=""),
+     user = os.getenv("USER", default=""),
+    passwd = os.getenv("PASSWORD", default="")
+)
 
-# cursorObject = dataBase.cursor()
+cursorObject = dataBase.cursor()
 
-# cursorObject.execute("CREATE DATABASE interviewaiDB")
+cursorObject.execute("CREATE DATABASE interviewaiDB")
 
-# print("DATABASE CREATED !")
+print("DATABASE CREATED !")

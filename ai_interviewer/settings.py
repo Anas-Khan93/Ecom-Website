@@ -9,6 +9,10 @@ https://docs.djangoproject.com/en/5.0/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.0/ref/settings/
 """
+import os
+from dotenv import load_dotenv
+# load environment from the .env file
+load_dotenv()
 
 from pathlib import Path
 
@@ -37,6 +41,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django_rest_passwordreset',
     'rest_framework',
     'rest_framework.authtoken',
     'ai_appinterviewer',
@@ -78,16 +83,18 @@ WSGI_APPLICATION = 'ai_interviewer.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'interviewaiDB',
-        'USER': 'root',
-        'PASSWORD':'anas93',
-        'HOST' : 'localhost',
-        'PORT' : '3306',
+        'ENGINE': os.getenv("ENGINE", default=""),
+        'NAME': os.getenv("NAME", default=""),
+        'USER': os.getenv("USER", default=""),
+        'PASSWORD': os.getenv("PASSWORD", default=""),
+        'HOST' : os.getenv("HOST", default=""),
+        'PORT' : os.getenv("PORT", default=""),
+        'OPTIONS':{
+            
+        }
 
     }
 }
-
 
 # Password validation
 # https://docs.djangoproject.com/en/5.0/ref/settings/#auth-password-validators
