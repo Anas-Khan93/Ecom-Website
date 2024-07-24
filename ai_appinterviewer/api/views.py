@@ -9,7 +9,7 @@ from django.conf import settings
 from django.core.mail import send_mail
 from django.utils.http import urlsafe_base64_decode
 from django.shortcuts import get_object_or_404
-from .serializers import RegisterSerializer, LoginSerializer, PasswordResetSerializer, PasswordResetConfirmSerializer
+from .serializers import RegisterSerializer, LoginSerializer, PasswordResetSerializer, PasswordResetConfirmSerializer, ProductProfitSerializer, EMIcalcSerializer
 
 
 class RegisterView(APIView):
@@ -40,6 +40,8 @@ class LoginView(APIView):
         if serializer.is_valid():
             user = serializer.validated_data['user']
             token, created = Token.objects.get_or_create(user=user)
+            tokens = Token.objects.get_or_create(user=user)
+            
             return Response({
                 
                 'Status': 'Success',
@@ -112,6 +114,65 @@ class PasswordResetConfirmView(APIView):
             return Response({'error':'Invalid token or user ID'}, status= status.HTTP_400_BAD_REQUEST)
         
 
-
+class ProductProfitCalculator(APIView):
+    permission_classes = [AllowAny]
+    
+    def post(self, request):
+        
+        print(data)
+        
+        serializer = ProductProfitSerializer(data= request.data)
+        
+        if serializer.is_valid():
             
+            profit = serializer.validated_data['profit']
+            profit_margin = serializer.validated_data['profit_margin']
+            return Response({
+                
+                'Status': 'Success',
+                'data':{
+                    
+                    'profit': profit,
+                    'profit_margin': profit_margin,
+                } 
+                
+            },status = status.HTTP_200_OK )
+        else:
+            return Response({
+                
+                'status': 'failed',
+                'Error Message': serializer.errors
+            }, status=status.HTTP_400_BAD_REQUEST)
+            
+            
+class EmiCalculatorView(APIView):
+    
+    permission_classes= [AllowAny]
+    
+    def post (self, request):
+        
+        serializer= EMIcalcSerializer(data=request.data)
+        
+        if serializer.is_valid():
+            
+            emi = serializer.validated_data['emi']
+            
+            return Response({
+                
+                'status': 'Success',
+                'data': {
+                    
+                    'emi': emi
+                } 
+                
+            }, status= status.HTTP_200_OK)
+            
+        else:
+            return Response({
+                
+                'status':'failed',
+                'Error message': serializer.errors
+                
+            }, status= status.HTTP_400_BAD_REQUEST)    
+        
             

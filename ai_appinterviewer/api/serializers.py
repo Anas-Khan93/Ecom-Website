@@ -1,4 +1,5 @@
 from rest_framework import serializers
+from rest_framework.permissions import IsAuthenticated
 from django.contrib.auth import authenticate
 from django.contrib.auth.models import User
 from django.contrib.auth.password_validation import validate_password
@@ -116,7 +117,62 @@ class PasswordResetConfirmSerializer(serializers.Serializer):
         user.save()
         
         
-    # 1- Submit email form                      //PasswordResetView.as_view()
-    # 2- Email sent success message             //PasswordResetDoneView.as_view()
-    # 3- Link to password reset form in email   //PasswordResetConfirmView.as_view()
-    # 4- Password successfully changed message  //PasswordResetCompleteView.as_view()
+class ProductProfitSerializer(serializers.Serializer):
+    
+    revenue = serializers.IntegerField(required=True)
+    cost = serializers.IntegerField(required=True)
+    total_products_sold = serializers.IntegerField(required= True)
+    
+    def calculate(self, data, revenue, cost):
+        # profit = revenue - cost
+        profit = data['revenue'] - data['cost']
+        print(profit)
+        
+        # profit_margin = (profit / revenue)*100
+        profit_margin = (profit / data['revenue']) * 100
+        print(profit_margin)
+        
+        data['profit']= profit
+        data['profit_margin'] = profit_margin
+        return data
+    
+    
+    def validate(self, data):
+        
+        revenue = data.get('revenue')
+        cost = data.get('cost')
+        total_products_sold = data.get('total_products_sold')
+        
+        # data = self.calculate(data, revenue, cost)
+        data = self.calculate(data)
+        
+        print(data)
+        return data
+        
+
+class EMIcalcSerializer(serializers.Serializer):
+    
+    p= serializers.FloatField(required= True)
+    r= serializers.FloatField(required= True)
+    n= serializers.IntegerField(required= True)
+    
+    def validate(self, data):
+        
+        p= data.get('p')
+        r= data.get('r')
+        n= data.get('n')
+        
+        data= self.findemi(data)
+        
+        print(data)
+        return data
+    
+    def findemi(self, data):
+              
+        data['r']= (data['r'] / 100) / 12
+          
+        emi= data['p'] * data['r'] * ((1 + data['r'])**data['n']) / (( 1 + data['r'])**data['n'] - 1)
+        
+        data['emi'] = emi
+        return data
+    
