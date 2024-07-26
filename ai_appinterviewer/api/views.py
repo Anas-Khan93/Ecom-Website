@@ -4,12 +4,14 @@ from rest_framework.views import APIView
 from rest_framework.permissions import AllowAny
 from rest_framework.authtoken.models import Token
 from django.shortcuts import render
+import requests
+from django.http import JsonResponse
 from django.urls import reverse
 from django.conf import settings
 from django.core.mail import send_mail
 from django.utils.http import urlsafe_base64_decode
 from django.shortcuts import get_object_or_404
-from .serializers import RegisterSerializer, LoginSerializer, PasswordResetSerializer, PasswordResetConfirmSerializer, ProductProfitSerializer, EMIcalcSerializer
+from .serializers import RegisterSerializer, LoginSerializer, PasswordResetSerializer, PasswordResetConfirmSerializer, ProductProfitSerializer, EMIcalcSerializer, BookFinderSerializer
 
 
 class RegisterView(APIView):
@@ -152,19 +154,16 @@ class EmiCalculatorView(APIView):
     def post (self, request):
         
         serializer= EMIcalcSerializer(data=request.data)
-        
         if serializer.is_valid():
             
             emi = serializer.validated_data['emi']
-            
             return Response({
                 
                 'status': 'Success',
                 'data': {
                     
                     'emi': emi
-                } 
-                
+                }      
             }, status= status.HTTP_200_OK)
             
         else:
@@ -175,4 +174,69 @@ class EmiCalculatorView(APIView):
                 
             }, status= status.HTTP_400_BAD_REQUEST)    
         
+
+class BookFinder(APIView):
+    
+    permission_classes = [AllowAny]
+    
+    def get(self, request, *args, **kwargs):
+        
+        # define the 3rd part API url
+        url = 'https://www.googleapis.com/books/v1/volumes?q='
+        
+        # get query parameter from the main url
+        book = request.GET.get('book')
+        
+        # make it into a dictionary
+        data={'book':book}
+
+        #serialize the data for validation
+        serializer = BookFinderSerializer(data=data)
+        
+        #validate the data
+        if serializer.is_valid():
+            queparam = serializer.validated_data['book']
+
+            # Join the url with the query parameter to send to the 3rd party api
+            google_url= url + queparam
+
+            # make the call to the 3rd party now that you have the url
+            response = requests.get(google_url)
             
+            #check the status code of the request to the 3rd party API
+            stat= response.status_code
+            
+            if stat == 200:
+                
+                data = response.json()
+                data = data['items']
+                
+                print(data)
+                
+                for subval in data:
+                    
+                    if 'selfLink' in subval:
+                        # data1['selfLink']= subval.value()
+                        data= subval['selfLink']
+                
+                print(data)      
+                return Response({
+                    
+                    'status': 'success',
+                    'selfLink': data
+                })
+                     
+                # return JsonResponse({
+                                      
+                #     'status': 'success',                    
+                #     'selfLink': data.values ('selfLink')
+                    
+                # }, status= status.HTTP_200_OK)
+
+            else:
+                return Response({
+                    
+                    'status':'failed',
+                    'Error message': serializer.errors
+                
+            }, status =status.HTTP_400_BAD_REQUEST )

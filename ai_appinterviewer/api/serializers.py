@@ -156,17 +156,22 @@ class EMIcalcSerializer(serializers.Serializer):
     r= serializers.FloatField(required= True)
     n= serializers.IntegerField(required= True)
     
+    # VALIDATE PARAMETERS Function
     def validate(self, data):
         
         p= data.get('p')
         r= data.get('r')
         n= data.get('n')
         
-        data= self.findemi(data)
+        if data['n'] < 18 or data['n'] > 60:
+            raise serializers.ValidationError("The number of months 'r' should be between 16 to 60 months.")
+        else:
+            data= self.findemi(data)
         
         print(data)
         return data
     
+    # CALCULATE EMI Function
     def findemi(self, data):
               
         data['r']= (data['r'] / 100) / 12
@@ -175,4 +180,15 @@ class EMIcalcSerializer(serializers.Serializer):
         
         data['emi'] = emi
         return data
+
+class BookFinderSerializer(serializers.Serializer):
+    book = serializers.CharField( required=True )
     
+    def validate(self,data):
+        book = data.get('book')
+        
+        if not book:
+            raise serializers.ValidationError({"Error":"a book category is required"})
+        
+        return data
+        

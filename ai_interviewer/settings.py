@@ -45,7 +45,14 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework.authtoken',
     'ai_appinterviewer',
+    'requests',
 ]
+
+
+# REST_FRAMEWORK = {
+#     "NON_FIELD_ERRORS_KEY": <desired key name>
+# }
+
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
