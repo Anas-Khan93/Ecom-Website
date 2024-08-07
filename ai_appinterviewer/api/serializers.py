@@ -4,33 +4,41 @@ from django.contrib.auth import authenticate
 from django.contrib.auth.models import User
 from django.contrib.auth.password_validation import validate_password
 from django_rest_passwordreset.tokens import get_token_generator
-from ai_appinterviewer.models import UserProfile
+from ai_appinterviewer.models import UserProfile, CategoryList
 
-
-class RegisterSerializer(serializers.ModelSerializer):
+# CREATE USER
+class RegisterSerializer(serializers.Serializer):
     
+    username = serializers.CharField(required=True, max_length=250)
     first_name = serializers.CharField( required=True, max_length=250)
     last_name = serializers.CharField( required=True, max_length=250)
     email = serializers.EmailField( required=True )
     password = serializers.CharField( write_only=True, required=True, validators=[validate_password])
+
     
     class Meta:
         
         model=UserProfile
-        fields = ('first_name', 'last_name', 'email', 'password')
+        fields = ('username','first_name', 'last_name', 'email', 'password')
            
     def validate_email(self,value):
         if User.objects.filter(email=value).exists():
             raise serializers.ValidationError("Email already exists, Please Login instead.")
         return value
+    
+    def validate_username(self, value):
+        if User.objects.filter(username=value).exists():
+            raise serializers.ValidationError("Username already exists.")
+        return value    
             
     def create(self,validated_data):
         user = User(
                               
-            username = validated_data['email'],
+            username = validated_data['username'],
             email = validated_data['email'],
             first_name = validated_data['first_name'],
-            last_name = validated_data['last_name'],
+            last_name = validated_data['last_name']
+            #is_superuser = validated_data['is_superuser']
 
         )
         user.set_password(validated_data['password'])
@@ -39,7 +47,7 @@ class RegisterSerializer(serializers.ModelSerializer):
         # create a userprofile instance
         user_profile = UserProfile.objects.create(
             
-            user=user,
+            username=validated_data['username'],
             first_name = validated_data['first_name'],
             last_name = validated_data['last_name'],
             email= validated_data['email'],
@@ -48,38 +56,89 @@ class RegisterSerializer(serializers.ModelSerializer):
         
         return user_profile
   
-        
-
 
 class LoginSerializer(serializers.Serializer):
     
-    email= serializers.EmailField(required= True)
+    username= serializers.CharField(required= True, max_length=250)
     password = serializers.CharField( write_only=True, required= True)
         
     def validate(self, data):
         
         #get the email and password
-        email = data.get('email')
+        username = data.get('username')
         password = data.get('password')
         
         #if the dumbass did'nt type the email or password. Tell him to
-        if not email:
-            raise serializers.ValidationError({"Email": "Email is required"})
+        if not username:
+            raise serializers.ValidationError({"Username": "Username is required"})
         if not password:
             raise serializers.ValidationError({"password": "password is required"})
-            
-        user = authenticate(username = email, password = password)
+        
+        # remember the authenticate function by default uses USERNAME and PASSWORD to authenticate the user.  
+        user = authenticate(username = username, password = password)
             
         if user is None:    
-            raise serializers.ValidationError("Invalid Email or Password")
+            raise serializers.ValidationError("Invalid username or Password")
           
         data['user'] = user
         return data
+
+# READ USER
+class UserDetailSerializer(serializers.Serializer):
     
-    # def resetPassword(self,data):
+    username = serializers.CharField(required=True, max_length=250)
+    first_name = serializers.CharField( required=True, max_length=250)
+    last_name = serializers.CharField( required=True, max_length=250)
+    email = serializers.EmailField( required=True )
+
+    def validate(self, data):
         
-    #     password = data.get('password')
+        return data
+    
+    def create(self, validated_data):
         
+        username = validated_data['username']
+        
+
+# UPDATE USER       
+class UserUpdateSerializer(serializers.Serializer):
+    
+    username = serializers.CharField(required=True, max_length= 250)
+    email = serializers.EmailField(required=True)
+    
+    class Meta:
+        model= User
+        fields = ('username', 'email')
+    
+    def validate_email(self, value):
+        user_id = self.instance.id if self.instance else None
+        if User.objects.filter(email=value).exclude(pk=user_id).exists():
+            raise serializers.ValidationError("Email already exists!")
+        return value
+    
+    # validate the username as in whether the new username is not
+    def validate_username(self, value):
+        user_id = self.instance.id if self.instance else None
+        if User.objects.filter(username=value).exclude(pk=user_id).exists():
+            raise serializers.ValidationError("Username already exists.")
+        return value
+    
+    # include the following parameters as you are updating the instance with the validated data
+    def update(self, instance, validated_data):
+        instance.username = validated_data.get('username', instance.username)
+        instance.email = validated_data.get('email', instance.email)
+        instance.save()
+        
+        # now we update the userprofile model
+        # there is another method which involves creating a signal that creates user_profile instance instead of having it saved here!
+        print(instance)
+        user_profile = UserProfile(user=instance)
+        user_profile.username = instance.username
+        user_profile.email = instance.email
+        user_profile.save()
+        
+        return instance
+
 
 # Validating the user before he sending the reset link
 class PasswordResetSerializer(serializers.Serializer):
@@ -181,6 +240,7 @@ class EMIcalcSerializer(serializers.Serializer):
         data['emi'] = emi
         return data
 
+
 class BookFinderSerializer(serializers.Serializer):
     book = serializers.CharField( required=True )
     
@@ -191,4 +251,31 @@ class BookFinderSerializer(serializers.Serializer):
             raise serializers.ValidationError({"Error":"a book category is required"})
         
         return data
+
+
+class CategorySerializer(serializers.Serializer):
+    
+    cat_name = serializers.CharField(max_length=250, required=True)
+    
+    def validate(self, data):
         
+        cat_name = data.get('cat_name')
+        
+        if not cat_name:
+            raise serializers.ValidationError("Please enter a category name")
+        if CategoryList.objects.filter(cat_name=data['cat_name']).exists():
+            raise serializers.ValidationError("Category already present. Cannot create duplicate categories!")
+        
+        data['cat_name'] = cat_name
+        
+        return data
+    
+    def create (self, validated_data):
+        
+        cat_name = CategoryList.objects.create(
+            
+            cat_name= validated_data['cat_name']
+        )
+        
+        print(cat_name)
+        return cat_name

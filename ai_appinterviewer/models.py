@@ -7,24 +7,45 @@ from django.contrib.auth.password_validation import validate_password
 # USER MODEL:
 class UserProfile(models.Model):
     
-    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    user = models.OneToOneField(User, on_delete=models.CASCADE, primary_key=True)
     
     #defining the model fields here
+
+    username = models.CharField(max_length=250)
     first_name = models.CharField(max_length=250)
     last_name = models.CharField(max_length=250)
-    email = models.EmailField(unique=True)
+    email = models.EmailField(unique=True)  
     password = models.CharField(max_length=128)
+    user_created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         db_table = 'user_profile'
         managed = True
+        
 
-# THE A.I PLAN MODEL
-# class IdPlan(models.Model):
-#     plan_id = models.IntegerField(null=False, blank=False)
+# # THE Category Model
+class CategoryList (models.Model):
     
-#     class Meta:
-#         db_table = 'aiplanscheme'
-#         managed= True
-
-# CHATGPT MODEL:
+    #define the fields here
+    cat_id= models.AutoField(primary_key=True)
+    cat_name = models.CharField(max_length=250)
+    
+    class Meta:
+        db_table = 'category'
+        managed = True
+        
+        
+# # The Product Model:
+# class Product(models.Model):
+    
+#     #define the fields here
+#     prod_id = models.AutoField(primary_key=True)
+#     category_id = models.ForeignKey(CategoryList, on_delete=models.PROTECT)
+#     prod_name = models.CharField(max_length= 250, blank=False, null=False)
+#     prod_price = models.FloatField(blank=False, null= False)
+#     # prod_reviews = 
+#     prod_quantity = models.IntegerField(blank=False, null= False)
+#     # order_history =
+    
+    
+    

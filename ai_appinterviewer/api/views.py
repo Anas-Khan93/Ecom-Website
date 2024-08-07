@@ -1,69 +1,247 @@
 from rest_framework import status
+from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import AllowAny, IsAuthenticated, IsAdminUser
+#from rest_framework.authentication import TokenAuthentication
 from rest_framework.authtoken.models import Token
 from django.shortcuts import render
 import requests
+import pprint
+from django.contrib.auth import authenticate
+from rest_framework_simplejwt.authentication import JWTAuthentication
+from django.contrib.auth.models import User
 from django.http import JsonResponse
 from django.urls import reverse
 from django.conf import settings
 from django.core.mail import send_mail
 from django.utils.http import urlsafe_base64_decode
 from django.shortcuts import get_object_or_404
-from .serializers import RegisterSerializer, LoginSerializer, PasswordResetSerializer, PasswordResetConfirmSerializer, ProductProfitSerializer, EMIcalcSerializer, BookFinderSerializer
+from . import serializers as seria
 
 
+# CREATE USER:
 class RegisterView(APIView):
     
     permission_classes = [AllowAny]
     
+    
     def post(self, request):
-        serializer = RegisterSerializer(data=request.data)
-        print(serializer)
-        if serializer.is_valid():
-            serializer.save()
-            return Response({"status":"success"}, status= status.HTTP_201_CREATED)
-        else:
-            return Response({
-                
-                'Status':'failed',
-                'Error message': serializer.errors,
-                
-            }, status = status.HTTP_400_BAD_REQUEST)
+        
+        try:
+            serializer = seria.RegisterSerializer(data=request.data)
             
-                
+            if serializer.is_valid():
+                serializer.save()
+                return Response({"status":"success"}, status= status.HTTP_200_OK)
+            else:
+                return Response({
+                    
+                    'Status':'failed',
+                    'Error message': serializer.errors,
+                    
+                }, status = status.HTTP_400_BAD_REQUEST)
+        except:
+            print("Exception occurred")
+ 
+                           
 class LoginView(APIView):
     permission_classes = [AllowAny]
     
-    def post(self,request):
-        serializer = LoginSerializer(data= request.data)
+    def post(self, request):
+        serializer = seria.LoginSerializer(data=request.data)
         
         if serializer.is_valid():
-            user = serializer.validated_data['user']
-            token, created = Token.objects.get_or_create(user=user)
-            tokens = Token.objects.get_or_create(user=user)
+            username = serializer.validated_data['username']
+            password = serializer.validated_data['password']
             
-            return Response({
+            user = authenticate(username=username, password=password)
+            
+            if user is not None:
+                refresh = RefreshToken.for_user(user)
+                return Response({
+                    'status': 'success',
+                    'refresh_token': str(refresh),
+                    'access_token': str(refresh.access_token)
+                }, status=status.HTTP_200_OK)
                 
-                'Status': 'Success',
-                'data': {
-                    
-                    'authtoken': token.key,
-                    'firstName': user.first_name,
-                    'lastName': user.last_name,
-                    'email': user.email
-                }
-                
-            }, status=status.HTTP_200_OK)
-        
+            else:
+                # User authentication failed
+                return Response({
+                    'status': 'failed',
+                    'error': 'Invalid username or password'
+                }, status=status.HTTP_400_BAD_REQUEST)
         else:
+            # Serializer validation failed
+            return Response({
+                'status': 'failed',
+                'error': serializer.errors
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        # # This should never be reached, but if it does, return an error response
+        # return Response({
+        #     'status': 'error',
+        #     'message': 'Unexpected error occurred'
+        # }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+# READ ALL USERS (REQUIRES ADMIN PRIVILIDGES):
+class UserListView(APIView):
+    
+    permission_classes= [IsAdminUser, IsAuthenticated]
+    authentication_classes = [JWTAuthentication]
+
+    
+    def get(self,request):
+        
+        user= User.objects.all()
+        
+        # we need an additional parameter that is many and it will be set to true to let the serializer know we have many objects.
+        serializer = seria.UserDetailSerializer(user, many=True)
+        
+        return Response({
+            
+            'status':'success',
+            'Data': serializer.data 
+            
+        }, status= status.HTTP_200_OK )      
+        
+
+# READ USER (REQUIRES USER/ADMIN TO BE LOGGED IN ):
+class UserProfileView(APIView):
+    
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+    
+    # In DRF format=None, allows client to specify the desired format of the response data. example a client might request  a response
+    # like Json, XML or another format. 
+    def get(self, request, pk, format=None):
+        
+        # first we get the user object from the USER table based on id which is pk here
+        try:
+            
+            user = User.objects.get(pk=pk)
+            
+            if user == request.user or request.user.is_superuser is True:
+                
+                serializer = seria.UserDetailSerializer(user)
+                
+                return Response({
+                    
+                    'status':'success',
+                    'error': serializer.data
+                }, status= status.HTTP_200_OK)
+                
+            else:
+                return Response({
+                        
+                    'status':'failed',
+                    'error': 'You are not authorized to access this user'
+                        
+                }, status= status.HTTP_401_UNAUTHORIZED)
+            
+        except User.DoesNotExist:
             return Response({
                 
-                'Status': 'Failed',
-                'ErrorMessage': serializer.errors
-            }, status= status.HTTP_400_BAD_REQUEST)
+                'status': 'failed',
+                'error': 'User does not exist'
+                }, status= status.HTTP_404_NOT_FOUND)
+    
+
+    # def put(self, request, pk, format=None):
+        
+        
+    # def delete(self, request, pk, format=None):
+
+
+# UPDATE USER (REQUIRES USER/ADMIN TO BE LOGGED IN):
+class UserUpdateView(APIView):
+    
+    authentication_classes= [JWTAuthentication]
+    permission_classes= [IsAuthenticated]
+    
+    def put(self, request, pk, format=None):
+        
+        try:
+            user= User.objects.get(pk=pk)
             
+            if user== request.user or request.user.is_superuser:
+                
+                serializer = seria.UserUpdateSerializer(user, data=request.data, partial=True)
+            
+                if serializer.is_valid():
+                    serializer.save()
+                    
+                    return Response({
+                        
+                        'status':'successfully updated',
+                        'message' : f'User {pk} has been updated with the following details ',
+                        'data': serializer.data
+                        
+                    }, status= status.HTTP_200_OK)
+                    
+                else:
+                    return Response({
+                        
+                        'status':'failed',
+                        'error': serializer.errors                   
+                        
+                    }, status= status.HTTP_400_BAD_REQUEST)
+                
+        except User.DoesNotExist:
+            return Response({
+                
+                'status': 'failed',
+                'error': 'User does not exist'
+                
+            }, status= status.HTTP_404_NOT_FOUND)
+            
+
+# DELETE USER (REQUIRES USER TO BE LOGGED IN):
+class UserDeleteView(APIView):
+    
+    permission_classes = [IsAdminUser ,IsAuthenticated]
+    authentication_classes = [JWTAuthentication]
+    
+    def delete(self, request, pk):
+        
+        try:
+            user = User.objects.get(pk=pk)
+            
+            #check if the user making the request is the same user he is fetching and deleting
+            if user == request.user:
+                #first we delete the UserProfile instance
+                up = user_profile.objects.get(user=user)
+                up.delete()
+                
+                # then we delete the user
+                # No need to call the serializer
+                user.delete()
+                return Response({
+                        
+                    'status':'Success',
+                    'message': f'User {pk} has been deleted successfully'                  
+                        
+                }, status= status.HTTP_200_OK)
+                
+            else:
+                return Response({
+                    
+                    'status': 'failed',
+                    'error': 'You are not allowed to delete this user'
+                    
+                }, status= status.HTTP_401_UNAUTHORIZED)
+            
+        except User.DoesNotExist:
+            
+            return Response ({
+                
+                'status': 'failed',
+                'error':'user does not exist'
+                                
+            }, status= status.HTTP_400_BAD_REQUEST)
+
+
 class PasswordResetView(APIView):
     
     permission_classes=[AllowAny]
@@ -91,7 +269,8 @@ class PasswordResetView(APIView):
             )
             return Response({"message": "Password reset link sent !"}, status = status.HTTP_200_OK)
         return Response(serializer.errors, status= status.HTTP_400_BAD_REQUEST)
-    
+
+ 
 class PasswordResetConfirmView(APIView):
     permission_classes = [AllowAny]
     
@@ -114,7 +293,8 @@ class PasswordResetConfirmView(APIView):
                 return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         else:
             return Response({'error':'Invalid token or user ID'}, status= status.HTTP_400_BAD_REQUEST)
-        
+   
+  
 
 class ProductProfitCalculator(APIView):
     permission_classes = [AllowAny]
@@ -177,7 +357,8 @@ class EmiCalculatorView(APIView):
 
 class BookFinder(APIView):
     
-    permission_classes = [AllowAny]
+    permission_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
     
     def get(self, request, *args, **kwargs):
         
@@ -185,6 +366,10 @@ class BookFinder(APIView):
         url = 'https://www.googleapis.com/books/v1/volumes?q='
         
         # get query parameter from the main url
+        
+        state = request.headers
+        #print(state)
+        
         book = request.GET.get('book')
         
         # make it into a dictionary
@@ -195,6 +380,7 @@ class BookFinder(APIView):
         
         #validate the data
         if serializer.is_valid():
+            
             queparam = serializer.validated_data['book']
 
             # Join the url with the query parameter to send to the 3rd party api
@@ -203,40 +389,79 @@ class BookFinder(APIView):
             # make the call to the 3rd party now that you have the url
             response = requests.get(google_url)
             
+            pprint.pprint(response.headers)
+            
+           # state1 = response.headers.get('Content-Type ')
+            print("Content-Type of the response is: ",response.headers.get('Content-Type'))
+            
             #check the status code of the request to the 3rd party API
             stat= response.status_code
             
             if stat == 200:
                 
                 data = response.json()
+                #data = data['items']
+                
                 data = data['items']
+                #pprint.pprint(data)
                 
-                print(data)
-                
-                for subval in data:
-                    
-                    if 'selfLink' in subval:
-                        # data1['selfLink']= subval.value()
-                        data= subval['selfLink']
-                
-                print(data)      
-                return Response({
-                    
-                    'status': 'success',
-                    'selfLink': data
-                })
-                     
-                # return JsonResponse({
-                                      
-                #     'status': 'success',                    
-                #     'selfLink': data.values ('selfLink')
-                    
-                # }, status= status.HTTP_200_OK)
+                #our empty list to store our required data in
+                finalList= []
 
-            else:
+                
+                for subkey in data:
+                    
+                    for subsubkey, trueval in subkey.items():
+                            
+                        if subsubkey =='selfLink':
+                                
+                            newDict ={}
+                            newDict["selfLink"] = trueval
+                            finalList.append(newDict)
+                
+
+                return JsonResponse({
+                    
+                    'status':'success',
+                    'Data': finalList
+                    
+                }, status = status.HTTP_200_OK)
+
+
                 return Response({
                     
                     'status':'failed',
                     'Error message': serializer.errors
                 
             }, status =status.HTTP_400_BAD_REQUEST )
+
+
+class CategoryView(APIView):
+    
+    permission_classes = [JWTAuthentication]
+    permission_classes = [IsAdminUser]
+    
+    def post(self, request):
+        
+        serializer = CategorySerializer(data=request.data)
+        
+        if serializer.is_valid():
+            serializer.save()
+            cat_name = serializer.validated_data['cat_name']
+            print(cat_name)
+            
+            return Response({
+                
+                'status': 'success',
+                'message': 'Category ' + cat_name + ' successfully created',
+                                
+            }, status = status.HTTP_200_OK)
+            
+        else:
+            return Response({
+                
+                'status':'failed',
+                'error':serializer.errors,
+                
+            }, status = status.HTTP_400_BAD_REQUEST)
+        
