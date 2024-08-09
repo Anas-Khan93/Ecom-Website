@@ -24,15 +24,16 @@ class UserProfile(models.Model):
         
 
 # # THE Category Model
-class CategoryList (models.Model):
-    
-    #define the fields here
-    cat_id= models.AutoField(primary_key=True)
-    cat_name = models.CharField(max_length=250)
-    
-    class Meta:
-        db_table = 'category'
-        managed = True
+    class Category (models.Model):
+        
+        #define the fields here
+        cat_id= models.AutoField(primary_key=True)
+        cat_parent_id= models.IntegerField (required=True)
+        cat_name = models.CharField(max_length=250)
+        
+        class Meta:
+            db_table = 'category'
+            managed = True
         
         
 # # The Product Model:

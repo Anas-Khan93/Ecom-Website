@@ -4,7 +4,7 @@ from django.contrib.auth import authenticate
 from django.contrib.auth.models import User
 from django.contrib.auth.password_validation import validate_password
 from django_rest_passwordreset.tokens import get_token_generator
-from ai_appinterviewer.models import UserProfile, CategoryList
+from ai_appinterviewer.models import UserProfile, Category
 
 # CREATE USER
 class RegisterSerializer(serializers.Serializer):
@@ -150,6 +150,7 @@ class PasswordResetSerializer(serializers.Serializer):
             raise serializers.ValidationError("No user associated with this email found !")
         return value
 
+
 # Creating a token to send to the user when he clicks the link
 class PasswordResetConfirmSerializer(serializers.Serializer):
     token = serializers.CharField()
@@ -251,31 +252,57 @@ class BookFinderSerializer(serializers.Serializer):
             raise serializers.ValidationError({"Error":"a book category is required"})
         
         return data
-
-
-class CategorySerializer(serializers.Serializer):
     
+
+class CategoryCreationSerializer(serializers.Serializer):
+    
+    cat_parent_id = serializers.IntegerField(required=True)
     cat_name = serializers.CharField(max_length=250, required=True)
     
     def validate(self, data):
         
+        cat_parent_id = data.get('cat_parent_id')
         cat_name = data.get('cat_name')
         
         if not cat_name:
             raise serializers.ValidationError("Please enter a category name")
-        if CategoryList.objects.filter(cat_name=data['cat_name']).exists():
+        
+
+        if Category.objects.filter( cat_parent_id=cat_parent_id ,cat_name=cat_name).exists():
             raise serializers.ValidationError("Category already present. Cannot create duplicate categories!")
         
-        data['cat_name'] = cat_name
         
         return data
     
     def create (self, validated_data):
         
-        cat_name = CategoryList.objects.create(
+        cat_name = Category.objects.create(
             
             cat_name= validated_data['cat_name']
         )
         
         print(cat_name)
+        
         return cat_name
+    
+    def update(self, instance, validated_data):
+        
+        self.cat_parent_id = 
+        self.cat_name = Category.objects.update(
+            
+            cat_name = validated_data['cat_name']
+        )
+        
+        print(cat_name)
+        return cat_name
+    
+    
+class CategoryViewSerializer(serializers.Serializer):
+    
+    cat_id= serializers.IntegerField(required=True)
+    cat_name= serializers.CharField(max_length=250)
+    
+    def validate(self, data):
+        return data
+    
+    

@@ -18,6 +18,7 @@ from django.core.mail import send_mail
 from django.utils.http import urlsafe_base64_decode
 from django.shortcuts import get_object_or_404
 from . import serializers as seria
+from .. models import Category
 
 
 # CREATE USER:
@@ -44,7 +45,8 @@ class RegisterView(APIView):
         except:
             print("Exception occurred")
  
-                           
+
+                     
 class LoginView(APIView):
     permission_classes = [AllowAny]
     
@@ -85,6 +87,7 @@ class LoginView(APIView):
         # }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
+
 # READ ALL USERS (REQUIRES ADMIN PRIVILIDGES):
 class UserListView(APIView):
     
@@ -106,6 +109,7 @@ class UserListView(APIView):
             
         }, status= status.HTTP_200_OK )      
         
+
 
 # READ USER (REQUIRES USER/ADMIN TO BE LOGGED IN ):
 class UserProfileView(APIView):
@@ -154,6 +158,7 @@ class UserProfileView(APIView):
     # def delete(self, request, pk, format=None):
 
 
+
 # UPDATE USER (REQUIRES USER/ADMIN TO BE LOGGED IN):
 class UserUpdateView(APIView):
     
@@ -196,6 +201,7 @@ class UserUpdateView(APIView):
                 
             }, status= status.HTTP_404_NOT_FOUND)
             
+
 
 # DELETE USER (REQUIRES USER TO BE LOGGED IN):
 class UserDeleteView(APIView):
@@ -242,6 +248,7 @@ class UserDeleteView(APIView):
             }, status= status.HTTP_400_BAD_REQUEST)
 
 
+
 class PasswordResetView(APIView):
     
     permission_classes=[AllowAny]
@@ -270,6 +277,7 @@ class PasswordResetView(APIView):
             return Response({"message": "Password reset link sent !"}, status = status.HTTP_200_OK)
         return Response(serializer.errors, status= status.HTTP_400_BAD_REQUEST)
 
+ 
  
 class PasswordResetConfirmView(APIView):
     permission_classes = [AllowAny]
@@ -325,6 +333,7 @@ class ProductProfitCalculator(APIView):
                 'status': 'failed',
                 'Error Message': serializer.errors
             }, status=status.HTTP_400_BAD_REQUEST)
+ 
             
             
 class EmiCalculatorView(APIView):
@@ -354,6 +363,7 @@ class EmiCalculatorView(APIView):
                 
             }, status= status.HTTP_400_BAD_REQUEST)    
         
+
 
 class BookFinder(APIView):
     
@@ -436,14 +446,16 @@ class BookFinder(APIView):
             }, status =status.HTTP_400_BAD_REQUEST )
 
 
-class CategoryView(APIView):
+
+# CREATE category
+class CategoryCreationView(APIView):
     
     permission_classes = [JWTAuthentication]
     permission_classes = [IsAdminUser]
     
     def post(self, request):
         
-        serializer = CategorySerializer(data=request.data)
+        serializer = seria.CategoryCreationSerializer(data=request.data)
         
         if serializer.is_valid():
             serializer.save()
@@ -464,4 +476,111 @@ class CategoryView(APIView):
                 'error':serializer.errors,
                 
             }, status = status.HTTP_400_BAD_REQUEST)
+
+
+# READ all category
+class CategoryListView(APIView):
+    
+    permission_classes =[AllowAny]
+    
+    
+    def get(self, request):
         
+        try:
+            cat = Category.objects.all()
+            print(cat)
+            
+            serializer = seria.CategoryViewSerializer(cat, many=True)
+            print (serializer.data)
+            return Response({
+                    
+                'status': 'success',
+                'data': serializer.data
+                    
+            }, status = status.HTTP_200_OK)
+                
+        except Category.DoesNotExist:
+            return Response({
+                
+                'status': 'failed',
+                'error': 'No category exists'                
+            }, status= status.HTTP_404_NOT_FOUND)
+         
+         
+# READ single category          
+class CategorySingleView(APIView):
+    
+    permission_classes= [AllowAny]
+    
+    def get(self, request, pk):
+        
+        try:
+            cat = Category.objects.get(pk=pk)
+            
+            serializer = seria.CategoryViewSerializer(cat)
+            
+            return Response ({
+                
+                'Status':'Success',
+                'data': serializer.data
+                
+            })
+        
+        except Category.DoesNotExist:
+            return Response({
+                
+                'status': 'failed',
+                'error': f'Category {pk} does not exist'                
+                
+            }, status= status.HTTP_400_BAD_REQUEST)
+            
+ 
+ 
+ 
+ #UPDATE CATEGORY (ADMIN)
+
+
+
+
+class CategoryUpdateView(APIView):
+     
+    permission_classes = [IsAdminUser, IsAuthenticated]
+    authentication_classes = [JWTAuthentication]
+     
+    def put(self, request, pk):
+              
+        try:
+            cat = Category.objects.get(pk=pk)
+            
+            serializer = seria.CategoryCreationSerializer(cat, data=request.data, partial=True)
+            
+            if serializer.is_valid():
+                serializer.save()
+                
+                return Response({
+                    
+                    'Status': 'success',
+                    'Message': f'Category {pk} has been updated',
+                    'data': serializer.data
+                }, status= status.HTTP_200_OK)
+                
+            else:
+                return Response({
+                    
+                    'Status': 'failed',
+                    'Error message': serializer.errors
+                    
+                }, status= status.HTTP_400_BAD_REQUEST)
+            
+            
+        except Category.DoesNotExist:
+            return Response({
+                
+                'Status': 'failed',
+                'Error message': f'Category {pk} does not exist'
+                
+            }, status= status.HTTP_404_NOT_FOUND)
+            
+
+             
+            
