@@ -18,7 +18,7 @@ from django.core.mail import send_mail
 from django.utils.http import urlsafe_base64_decode
 from django.shortcuts import get_object_or_404
 from . import serializers as seria
-from .. models import Category
+from ai_appinterviewer.models import UserProfile, Category
 
 
 # CREATE USER:
@@ -410,7 +410,6 @@ class BookFinder(APIView):
             if stat == 200:
                 
                 data = response.json()
-                #data = data['items']
                 
                 data = data['items']
                 #pprint.pprint(data)
@@ -450,8 +449,9 @@ class BookFinder(APIView):
 # CREATE category
 class CategoryCreationView(APIView):
     
-    permission_classes = [JWTAuthentication]
-    permission_classes = [IsAdminUser]
+    #permission_classes = [JWTAuthentication]
+    #permission_classes = [IsAdminUser]
+    permission_classes = [AllowAny]
     
     def post(self, request):
         
@@ -459,13 +459,14 @@ class CategoryCreationView(APIView):
         
         if serializer.is_valid():
             serializer.save()
-            cat_name = serializer.validated_data['cat_name']
-            print(cat_name)
+            #cat_name = serializer.validated_data['cat_name']
+            #print(cat_name)
             
             return Response({
                 
                 'status': 'success',
-                'message': 'Category ' + cat_name + ' successfully created',
+                'message': 'Category successfully created',
+                'data': serializer.data
                                 
             }, status = status.HTTP_200_OK)
             
@@ -490,7 +491,7 @@ class CategoryListView(APIView):
             cat = Category.objects.all()
             print(cat)
             
-            serializer = seria.CategoryViewSerializer(cat, many=True)
+            serializer = seria.CategoryCreationSerializer(cat, many=True)
             print (serializer.data)
             return Response({
                     
@@ -516,15 +517,40 @@ class CategorySingleView(APIView):
         
         try:
             cat = Category.objects.get(pk=pk)
+            #print(cat)
+            subcat = Category.objects.filter(cat_parent_id=pk)
+            #print(subcat)
             
-            serializer = seria.CategoryViewSerializer(cat)
+            serializer = seria.CategoryCreationSerializer(cat)
+            subserializer = seria.CategoryCreationSerializer(subcat, many=True)
+            array= []
             
-            return Response ({
+            #print(int(subserializer.data['cat_parent_id']))
+            
+            for subcat_data in subserializer.data:
+                id= (int(subcat_data['cat_id']))
+                c = Category.objects.filter(cat_parent_id=id)
+                if c.exists():
+                    serial = seria.CategoryCreationSerializer(c, many=True)
+                    array.append(serial.data)
+            
+            if subcat is None:
                 
-                'Status':'Success',
-                'data': serializer.data
-                
-            })
+                return Response ({
+                    
+                    'Status':'Success',
+                    'category': serializer.data
+                    
+                })
+            else:
+                return Response({
+                    
+                    'Status': 'Success',
+                    'Category':serializer.data,
+                    'Subcategory': subserializer.data,
+                    'subsubcat':array                 
+                    
+                })    
         
         except Category.DoesNotExist:
             return Response({
@@ -544,8 +570,9 @@ class CategorySingleView(APIView):
 
 class CategoryUpdateView(APIView):
      
-    permission_classes = [IsAdminUser, IsAuthenticated]
-    authentication_classes = [JWTAuthentication]
+    #permission_classes = [IsAdminUser, IsAuthenticated]
+    #authentication_classes = [JWTAuthentication]
+    permission_classes = [AllowAny]
      
     def put(self, request, pk):
               
@@ -583,4 +610,29 @@ class CategoryUpdateView(APIView):
             
 
              
+class CategoryDeleteView(APIView):
+    
+    permission_classes= [AllowAny]
+    
+    def delete (self, request, pk):
+        
+        try:
             
+            catdel = Category.objects.get(pk=pk)
+            
+            catdel.delete()
+            
+            return Response({
+                
+                'Status': 'Success',
+                'Message': f'Category{pk} deleted Successfully'
+                            
+            }, status= status.HTTP_200_OK)  
+        
+        except Category.DoesNotExist:
+            return Response({
+                
+                'Status':'Failed',
+                'Error message': 'Category does not exist'
+                
+            }, status= status.HTTP_404_NOT_FOUND)
