@@ -258,7 +258,7 @@ class CategoryCreationSerializer(serializers.Serializer):
     
     #these are class variables and they are used to store data when i create an instance of the class
     #I can assign values to them, which can then be accessed and modified using methods within my class
-
+    cat_id = serializers.IntegerField(read_only=True) # if you don't want to ask this as input make it read only
     cat_parent_id = serializers.IntegerField()
     cat_name = serializers.CharField(max_length=250, required=True)
     
