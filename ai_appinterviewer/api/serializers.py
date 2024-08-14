@@ -4,7 +4,7 @@ from django.contrib.auth import authenticate
 from django.contrib.auth.models import User
 from django.contrib.auth.password_validation import validate_password
 from django_rest_passwordreset.tokens import get_token_generator
-from ai_appinterviewer.models import Category, UserProfile
+from ai_appinterviewer.models import Category, UserProfile, product
 
 # CREATE USER
 class RegisterSerializer(serializers.Serializer):
@@ -261,11 +261,7 @@ class CategoryCreationSerializer(serializers.Serializer):
     cat_id = serializers.IntegerField(read_only=True) # if you don't want to ask this as input make it read only
     cat_parent_id = serializers.IntegerField()
     cat_name = serializers.CharField(max_length=250, required=True)
-    
-    class Meta:
-        model = Category
-        fields = '__all__'
-    
+
     # Meta class is generally used for Model Serializer REMEMBER SIMBA
 
     
@@ -307,6 +303,58 @@ class CategoryCreationSerializer(serializers.Serializer):
         #print(cat_name)
         return instance
     
+
+                                    #NEW METHOD
+# ************************************************************************************
+#CRUD PRODUCT (using model serializer)
+# ModelSerializer fully maps all the fields that we want defined in our model. It helps in not having to define each value again in 
+# the serializer. 
+
+class ProdCreationSerializer(serializers.ModelSerializer):
     
+    class Meta:
+        model = product
+        fields = ("cat_id", "prod_name", "prod_price", "prod_quantity", "prod_descr")
+        
+        
+    def validate(self,data):
+        
+        cat_id = data.get('cat_id')
+        prod_name = data.get('prod_name')
+        prod_price = data.get('prod_price')
+        prod_quantity = data.get('prod_quantity')
+        prod_descr = data.get('prod_descr')
+        
+        # NEED TO CREATE A CONDITION TO CHECK IF A PRODUCT ALREADY EXISTS IN THAT CATEGORY
+        
+        if product.objects.filter(cat_id=cat_id, prod_name=prod_name).exists():
+            raise serializers.ValidationError("Product already exists in that category!")
+        
+        return data
+        
+    def create(self, validated_data):
+        
+        prod = product.objects.create(
+            
+            cat_id= validated_data['cat_id'],
+            prod_name= validated_data['prod_name'],
+            prod_price= validated_data['prod_price'],
+            prod_quantity= validated_data['prod_quantity'],
+            prod_descr= validated_data['prod_descr']
+            
+        )
+        
+        return prod
+    
+    def update(self, instance, validated_data):
+        
+        instance.cat_id = validated_data.get('cat_id', instance.cat_id)
+        instance.prod_name = validated_data.get('prod_name', instance.prod_name)
+        instance.prod_price = validated_data.get('prod_price', instance.prod_price)
+        instance.prod_quantity = validated_data.get('prod_quantity', instance.prod_quantity)
+        instance.prod_descr = validated_data.get('prod_descr', instance.prod_descr)
+            
+        return instance
+            
 
     

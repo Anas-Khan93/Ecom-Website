@@ -4,7 +4,7 @@ from django.contrib.auth.password_validation import validate_password
 
 # Create your models here.
 
-# USER MODEL:
+# THE USER MODEL:
 class UserProfile(models.Model):
     
     user = models.OneToOneField(User, on_delete=models.CASCADE, primary_key=True)
@@ -23,7 +23,7 @@ class UserProfile(models.Model):
         managed = True
         
 
-# # THE Category Model
+# THE Category Model
 class Category(models.Model):
         
         #define the fields here
@@ -36,17 +36,21 @@ class Category(models.Model):
         managed = True
         
         
-# # The Product Model:
-# class Product(models.Model):
+# The PRODUCT Model:
+class product(models.Model):
     
-#     #define the fields here
-#     prod_id = models.AutoField(primary_key=True)
-#     category_id = models.ForeignKey(CategoryList, on_delete=models.PROTECT)
-#     prod_name = models.CharField(max_length= 250, blank=False, null=False)
-#     prod_price = models.FloatField(blank=False, null= False)
-#     # prod_reviews = 
-#     prod_quantity = models.IntegerField(blank=False, null= False)
-#     # order_history =
+    #define the fields here
+    cat_id = models.ForeignKey(CategoryList, on_delete=models.PROTECT)
+    prod_id = models.AutoField(primary_key=True)
+    prod_name = models.CharField(max_length= 250, blank=False, null=False)
+    prod_price = models.FloatField(blank=False, null= False)
+    #prod_image = models.ImageField(required=True, )
+    prod_quantity = models.IntegerField(blank=False, null= False)
+    prod_descr = models.TextField(required=True)
+    
+    class Meta:
+        db_table = 'proddetails'
+        managed = True
     
     
     
