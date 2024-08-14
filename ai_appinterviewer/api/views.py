@@ -18,8 +18,7 @@ from django.core.mail import send_mail
 from django.utils.http import urlsafe_base64_decode
 from django.shortcuts import get_object_or_404
 from . import serializers as seria
-from ai_appinterviewer.models import UserProfile, Category
-
+from ai_appinterviewer.models import UserProfile, Category, product
 
 # CREATE USER:
 class RegisterView(APIView):
@@ -465,7 +464,6 @@ class CategoryCreationView(APIView):
             return Response({
                 
                 'status': 'success',
-                'message': 'Category successfully created',
                 'data': serializer.data
                                 
             }, status = status.HTTP_200_OK)
@@ -561,12 +559,6 @@ class CategorySingleView(APIView):
             }, status= status.HTTP_400_BAD_REQUEST)
             
  
- 
- 
- #UPDATE CATEGORY (ADMIN)
-
-
-
 
 class CategoryUpdateView(APIView):
      
@@ -636,3 +628,163 @@ class CategoryDeleteView(APIView):
                 'Error message': 'Category does not exist'
                 
             }, status= status.HTTP_404_NOT_FOUND)
+            
+                     
+
+# CREATE PRODUCT
+class ProdCreationView(APIView):
+    
+    def post (self, request):
+        
+        serializer = seria.ProdCreationSerializer(data=request.data)
+        
+        if serializer.is_valid:
+            serializer.save()
+            
+            return Response ({
+                
+                'Status': 'Success',
+                'data': serializer.data
+                
+            }, status= status.HTTP_200_OK)
+            
+        else:
+            return Response({
+                
+                'Status': 'Failed',
+                'Error message': serializer.errors
+                
+            }, status = status.HTTP_400_BAD_REQUEST)
+            
+   
+            
+# READ PRODUCT (ALL)            
+class ProductListView(APIView):
+    
+    def get(self, request):
+        
+        try:
+        
+            prod = product.objects.all()
+        
+            serializer = seria.ProdCreationSerializer(prod, many=True)
+            
+            return Response({
+                
+                'Status': 'Success',
+                'data': serializer.data
+                
+            }, status= status.HTTP_200_OK)
+            
+        except product.DoesNotExist:
+            
+            return Response({
+                
+                'Status': 'failed',
+                'Error message': 'No products'
+                
+            }, status= status.HTTP_404_NOT_FOUND)
+ 
+  
+       
+# READ PRODUCT (SINGLE)
+class ProductSingleView(APIView):
+    
+    def get(self, request, pk):
+        
+        try: 
+            prod = product.objects.get(pk=pk)
+            
+            serializer = seria.ProdCreationSerializer(prod)
+            
+            return Response ({
+                
+                'Status':'Success',
+                'data': serializer.data
+                
+            }, status= status.HTTP_200_OK)
+            
+        except product.DoesNotExist:
+            return Response({
+                
+                'Status': 'failed',
+                'Error message': ' Product does not exist'
+                
+            }, status= status.HTTP_404_NOT_FOUND)
+
+
+
+
+class ProductUpdateView(APIView):
+    
+    def put(self, request, pk):
+        
+        try:
+            
+            prod = product.objects.get(pk=pk)
+            
+            serializer = seria.ProdCreationSerializer(prod, data=request.data, partial=True)
+            
+            if serializer.is_valid():
+                serializer.save()
+                return Response({
+                    
+                    'Status': 'Success',
+                    'message': f'product {pk} updated successfully',
+                    'data': serializer.data
+                    
+                }, status= status.HTTP_200_OK)
+            else:
+                return Response({
+                    
+                    'status': 'failed',
+                    'error': serializer.errors
+                    
+                }, status= status.HTTP_400_BAD_REQUEST)
+        except product.DoesNotExist:
+            
+            return Response({
+                
+                'Status': 'failed',
+                'Error message': f'Product{pk} does not exist'
+                
+            }, status= status.HTTP_404_NOT_FOUND)
+            
+
+
+
+
+
+# DELETE PRODUCT
+class ProductDeleteView(APIView):
+    
+    # put permissions
+    permission_classes= [AllowAny]
+    
+    def delete(self, request, pk):
+        
+        try:
+            
+            prod = product.objects.get(pk=pk)
+            
+            prod.delete()
+            
+            return Response({
+                
+                'Status': 'Success',
+                'Message': f'Product{pk} deleted Successfully'
+            }, status= status.HTTP_200_OK)
+            
+        except product.DoesNotExist:
+            return Response({
+                
+                'Status': 'failed',
+                'Error': 'Product does not exist'
+                
+            }, status= status.HTTP_404_NOT_FOUND)
+        
+        
+        
+        
+        
+            
