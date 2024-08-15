@@ -172,12 +172,17 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # AZURE STORAGE CODE PART:
 DEAFULT_FILE_STORAGE = 'backend.custom_azure.AzureMediaStorage'
-STATICFILES_STORAGE = 'backend.custom_azure.AzureStaticStorage'
+# settings.py
 
-STATIC_LOCATION = "static"
-MEDIA_LOCATION = "media"
 
-AZURE_ACCOUNT_NAME = "ecomimage"
-AZURE_CUSTOM_DOMAIN = f'{ecomimage}.blob.core.windows.net'
-STATIC_URL = f'https://{AZURE_CUSTOM_DOMAIN}/{STATIC_LOCATION}/'
-MEDIA_URL = f'https://{AZURE_CUSTOM_DOMAIN}/{MEDIA_LOCATION}/'
+
+# Azure Storage Configuration
+AZURE_ACCOUNT_NAME = 'ecomimage'  # Your Azure Storage Account name
+AZURE_ACCOUNT_KEY = '1mu85ovEvWpOJySN4yZgjhIKyDXc3cDQ58NjYxzOSPKqiXQYGGKiXbYwz0GzUEM9hs1KTUzVFsnb+AStKIqzyQ=='    # Your Azure Storage Account key
+AZURE_CONTAINER = 'media'     # The name of your container
+AZURE_CUSTOM_DOMAIN = f'{AZURE_ACCOUNT_NAME}.blob.core.windows.net'
+
+DEFAULT_FILE_STORAGE = 'storages.backends.azure_storage.AzureStorage'
+AZURE_URL_EXPIRATION_SECS = None  # For public access, otherwise set expiration
+MEDIA_URL = f'https://{AZURE_CUSTOM_DOMAIN}/{AZURE_CONTAINER}/'
+
