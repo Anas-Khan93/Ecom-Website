@@ -44,7 +44,7 @@ class product(models.Model):
     prod_id = models.AutoField(primary_key=True)
     prod_name = models.CharField(max_length= 250, blank=False, null=False)
     prod_price = models.FloatField(blank=False, null= False)
-    #prod_image = models.ImageField(required=True, )
+    prod_image= models.ImageField(upload_to= 'products/', required=True)
     prod_quantity = models.IntegerField(blank=False, null= False)
     prod_descr = models.TextField(required=True)
     

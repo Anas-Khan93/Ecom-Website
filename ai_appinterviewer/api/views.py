@@ -445,7 +445,7 @@ class BookFinder(APIView):
 
 
 
-# CREATE category
+# CRUD CATEGORY
 class CategoryCreationView(APIView):
     
     #permission_classes = [JWTAuthentication]
@@ -477,7 +477,6 @@ class CategoryCreationView(APIView):
             }, status = status.HTTP_400_BAD_REQUEST)
 
 
-# READ all category
 class CategoryListView(APIView):
     
     permission_classes =[AllowAny]
@@ -505,8 +504,7 @@ class CategoryListView(APIView):
                 'error': 'No category exists'                
             }, status= status.HTTP_404_NOT_FOUND)
          
-         
-# READ single category          
+                
 class CategorySingleView(APIView):
     
     permission_classes= [AllowAny]
@@ -559,7 +557,6 @@ class CategorySingleView(APIView):
             }, status= status.HTTP_400_BAD_REQUEST)
             
  
-
 class CategoryUpdateView(APIView):
      
     #permission_classes = [IsAdminUser, IsAuthenticated]
@@ -600,8 +597,7 @@ class CategoryUpdateView(APIView):
                 
             }, status= status.HTTP_404_NOT_FOUND)
             
-
-             
+   
 class CategoryDeleteView(APIView):
     
     permission_classes= [AllowAny]
@@ -631,7 +627,7 @@ class CategoryDeleteView(APIView):
             
                      
 
-# CREATE PRODUCT
+# CRUD PRODUCT
 class ProdCreationView(APIView):
     
     def post (self, request):
@@ -656,9 +652,7 @@ class ProdCreationView(APIView):
                 
             }, status = status.HTTP_400_BAD_REQUEST)
             
-   
-            
-# READ PRODUCT (ALL)            
+         
 class ProductListView(APIView):
     
     def get(self, request):
@@ -686,8 +680,6 @@ class ProductListView(APIView):
             }, status= status.HTTP_404_NOT_FOUND)
  
   
-       
-# READ PRODUCT (SINGLE)
 class ProductSingleView(APIView):
     
     def get(self, request, pk):
@@ -711,8 +703,6 @@ class ProductSingleView(APIView):
                 'Error message': ' Product does not exist'
                 
             }, status= status.HTTP_404_NOT_FOUND)
-
-
 
 
 class ProductUpdateView(APIView):
@@ -751,11 +741,6 @@ class ProductUpdateView(APIView):
             }, status= status.HTTP_404_NOT_FOUND)
             
 
-
-
-
-
-# DELETE PRODUCT
 class ProductDeleteView(APIView):
     
     # put permissions
