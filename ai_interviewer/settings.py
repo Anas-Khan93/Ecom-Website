@@ -177,8 +177,8 @@ DEAFULT_FILE_STORAGE = 'backend.custom_azure.AzureMediaStorage'
 
 
 # Azure Storage Configuration
-AZURE_ACCOUNT_NAME = 'ecomimage'  # Your Azure Storage Account name
-AZURE_ACCOUNT_KEY = '1mu85ovEvWpOJySN4yZgjhIKyDXc3cDQ58NjYxzOSPKqiXQYGGKiXbYwz0GzUEM9hs1KTUzVFsnb+AStKIqzyQ=='    # Your Azure Storage Account key
+AZURE_ACCOUNT_NAME = os.getenv("AZURE_ACCOUNT_NAME", default="")  # Your Azure Storage Account name
+AZURE_ACCOUNT_KEY = os.getenv("AZURE_ACCOUNT_KEY", default="")    # Your Azure Storage Account key
 AZURE_CONTAINER = 'media'     # The name of your container
 AZURE_CUSTOM_DOMAIN = f'{AZURE_ACCOUNT_NAME}.blob.core.windows.net'
 
