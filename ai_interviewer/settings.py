@@ -10,6 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.0/ref/settings/
 """
 import os
+#import storages
 from datetime import timedelta
 
 from dotenv import load_dotenv
@@ -123,9 +124,9 @@ DATABASES = {
         'PORT' : os.getenv("PORT", default=""),
         'OPTIONS':{
             
-        }
+        },
 
-    }
+    },
 }
 
 # Password validation
@@ -171,18 +172,35 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 
 # AZURE STORAGE CODE PART:
-DEAFULT_FILE_STORAGE = 'backend.custom_azure.AzureMediaStorage'
+
 # settings.py
 
 
 
-# Azure Storage Configuration
-AZURE_ACCOUNT_NAME = os.getenv("AZURE_ACCOUNT_NAME", default="")  # Your Azure Storage Account name
-AZURE_ACCOUNT_KEY = os.getenv("AZURE_ACCOUNT_KEY", default="")    # Your Azure Storage Account key
+#Azure Storage Configuration
+# AZURE_ACCOUNT_NAME = os.getenv("AZURE_ACCOUNT_NAME", default="")  # Your Azure Storage Account name
+# AZURE_ACCOUNT_KEY = os.getenv("AZURE_ACCOUNT_KEY", default="")    # Your Azure Storage Account key
 AZURE_CONTAINER = 'media'     # The name of your container
-AZURE_CUSTOM_DOMAIN = f'{AZURE_ACCOUNT_NAME}.blob.core.windows.net'
+AZURE_CUSTOM_DOMAIN = f'{os.getenv("AZURE_ACCOUNT_NAME")}.blob.core.windows.net'
 
-DEFAULT_FILE_STORAGE = 'storages.backends.azure_storage.AzureStorage'
-AZURE_URL_EXPIRATION_SECS = None  # For public access, otherwise set expiration
+
+STORAGES = {
+    "default": {
+        "BACKEND": "storages.backends.azure_storage.AzureStorage",
+        "OPTIONS": {
+            "account_name": os.getenv("AZURE_ACCOUNT_NAME"),
+            "account_key" : os.getenv("AZURE_ACCOUNT_KEY"),
+            "azure_container": "media",
+            "custom_domain": f'{os.getenv("AZURE_ACCOUNT_NAME")}.blob.core.windows.net' ,
+        },
+    },
+    "staticfiles": {
+        "BACKEND": "django.contrib.staticfile.storage.StaticFileStorage",        
+    },
+}
+
+#DEFAULT_FILE_STORAGE = 'ai_interviewer.custom_azure.AzureMediaStorage'
+# AZURE_URL_EXPIRATION_SECS = None  # For public access, otherwise set expiration
 MEDIA_URL = f'https://{AZURE_CUSTOM_DOMAIN}/{AZURE_CONTAINER}/'
+
 

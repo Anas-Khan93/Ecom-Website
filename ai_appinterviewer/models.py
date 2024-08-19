@@ -4,6 +4,8 @@ from django.contrib.auth.password_validation import validate_password
 
 # Create your models here.
 
+
+
 # THE USER MODEL:
 class UserProfile(models.Model):
     
@@ -23,6 +25,8 @@ class UserProfile(models.Model):
         managed = True
         
 
+
+
 # THE Category Model
 class Category(models.Model):
         
@@ -35,19 +39,20 @@ class Category(models.Model):
         db_table = 'category'
         managed = True
         
-        
+
+
+ 
 # The PRODUCT Model:
 class product(models.Model):
     
     #define the fields here
-    cat_id = models.ForeignKey(CategoryList, on_delete=models.PROTECT)
+    cat = models.ForeignKey(Category, on_delete=models.PROTECT)
     prod_id = models.AutoField(primary_key=True)
     prod_name = models.CharField(max_length= 250, blank=False, null=False)
     prod_price = models.FloatField(blank=False, null= False)
-    prod_image= models.ImageField(upload_to= 'products/', required=True)
     prod_quantity = models.IntegerField(blank=False, null= False)
-    prod_descr = models.TextField(required=True)
-    
+    prod_descr = models.TextField(blank=False, null=False)
+    prod_image= models.ImageField(upload_to= 'products/', blank=False, null=False)
     class Meta:
         db_table = 'proddetails'
         managed = True

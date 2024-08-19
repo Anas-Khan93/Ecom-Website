@@ -5,6 +5,7 @@ from django.contrib.auth.models import User
 from django.contrib.auth.password_validation import validate_password
 from django_rest_passwordreset.tokens import get_token_generator
 from ai_appinterviewer.models import Category, UserProfile, product
+import logging
 
 # CREATE USER
 class RegisterSerializer(serializers.Serializer):
@@ -310,24 +311,27 @@ class CategoryCreationSerializer(serializers.Serializer):
 # ModelSerializer fully maps all the fields that we want defined in our model. It helps in not having to define each value again in 
 # the serializer. 
 
+
 class ProdCreationSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = product
-        fields = ("cat_id", "prod_name", "prod_price", "prod_quantity", "prod_descr")
+        fields = ("cat", "prod_id", "prod_name", "prod_image" , "prod_price", "prod_quantity", "prod_descr")
+        read_only_fields= ["prod_id"]
         
         
     def validate(self,data):
         
-        cat_id = data.get('cat_id')
+        cat = data.get('cat')
         prod_name = data.get('prod_name')
+        prod_image = data.get('prod_image')
         prod_price = data.get('prod_price')
         prod_quantity = data.get('prod_quantity')
         prod_descr = data.get('prod_descr')
         
         # NEED TO CREATE A CONDITION TO CHECK IF A PRODUCT ALREADY EXISTS IN THAT CATEGORY
         
-        if product.objects.filter(cat_id=cat_id, prod_name=prod_name).exists():
+        if product.objects.filter(cat=cat, prod_name=prod_name).exists():
             raise serializers.ValidationError("Product already exists in that category!")
         
         return data
@@ -336,8 +340,9 @@ class ProdCreationSerializer(serializers.ModelSerializer):
         
         prod = product.objects.create(
             
-            cat_id= validated_data['cat_id'],
+            cat= validated_data['cat'],
             prod_name= validated_data['prod_name'],
+            prod_image= validated_data['prod_image'],
             prod_price= validated_data['prod_price'],
             prod_quantity= validated_data['prod_quantity'],
             prod_descr= validated_data['prod_descr']
@@ -348,8 +353,9 @@ class ProdCreationSerializer(serializers.ModelSerializer):
     
     def update(self, instance, validated_data):
         
-        instance.cat_id = validated_data.get('cat_id', instance.cat_id)
+        instance.cat = validated_data.get('cat', instance.cat)
         instance.prod_name = validated_data.get('prod_name', instance.prod_name)
+        instance.prod_image = validated_data.get('prod_image', instance.prod_image)
         instance.prod_price = validated_data.get('prod_price', instance.prod_price)
         instance.prod_quantity = validated_data.get('prod_quantity', instance.prod_quantity)
         instance.prod_descr = validated_data.get('prod_descr', instance.prod_descr)

@@ -634,7 +634,7 @@ class ProdCreationView(APIView):
         
         serializer = seria.ProdCreationSerializer(data=request.data)
         
-        if serializer.is_valid:
+        if serializer.is_valid():
             serializer.save()
             
             return Response ({
@@ -688,6 +688,8 @@ class ProductSingleView(APIView):
             prod = product.objects.get(pk=pk)
             
             serializer = seria.ProdCreationSerializer(prod)
+            
+            print(serializer.data)
             
             return Response ({
                 
@@ -767,9 +769,5 @@ class ProductDeleteView(APIView):
                 'Error': 'Product does not exist'
                 
             }, status= status.HTTP_404_NOT_FOUND)
-        
-        
-        
-        
         
             
