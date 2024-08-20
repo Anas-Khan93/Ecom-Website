@@ -4,8 +4,9 @@ from django.contrib.auth import authenticate
 from django.contrib.auth.models import User
 from django.contrib.auth.password_validation import validate_password
 from django_rest_passwordreset.tokens import get_token_generator
-from ai_appinterviewer.models import Category, UserProfile, product
+from ai_appinterviewer.models import Category, UserProfile, product, ProductsImages
 import logging
+from django.core.files.storage import default_storage
 
 # CREATE USER
 class RegisterSerializer(serializers.Serializer):
@@ -305,6 +306,9 @@ class CategoryCreationSerializer(serializers.Serializer):
         return instance
     
 
+
+
+
                                     #NEW METHOD
 # ************************************************************************************
 #CRUD PRODUCT (using model serializer)
@@ -335,6 +339,7 @@ class ProdCreationSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("Product already exists in that category!")
         
         return data
+    
         
     def create(self, validated_data):
         
@@ -353,14 +358,48 @@ class ProdCreationSerializer(serializers.ModelSerializer):
     
     def update(self, instance, validated_data):
         
+        # Delete the previous uploaded file from the blob storage f new image is being uploaded
+        if 'prod_image' in validated_data:
+            if instance.prod_image:
+                default_storage.delete(instance.prod_image.name)
+                
+        # Update the instance with new data
         instance.cat = validated_data.get('cat', instance.cat)
         instance.prod_name = validated_data.get('prod_name', instance.prod_name)
         instance.prod_image = validated_data.get('prod_image', instance.prod_image)
         instance.prod_price = validated_data.get('prod_price', instance.prod_price)
         instance.prod_quantity = validated_data.get('prod_quantity', instance.prod_quantity)
         instance.prod_descr = validated_data.get('prod_descr', instance.prod_descr)
+
             
+        instance.save()
         return instance
             
 
     
+class ProdImageSerializer(serializers.ModelSerializer):
+    
+    class Meta:
+        model = ProductsImages
+        fields = ("img_id", "prod_id", "prod_img_url" )
+        read_only_fields = ["prod_id"]
+    
+     
+    def validate(self, data):
+        
+        prod_id = data.get('prod_id')
+        prod_img_url = data.get('prod_url')
+        
+        return data
+    
+    
+    def create(self, validated_data):
+        
+        prodimg = ProductsImages.objects.create(
+            
+            prod_id= validated_data['prod_id'],
+            prod_img_url= validated_data['prod_img_url'],
+            
+        )
+        
+        return prodimg

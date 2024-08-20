@@ -18,7 +18,8 @@ from django.core.mail import send_mail
 from django.utils.http import urlsafe_base64_decode
 from django.shortcuts import get_object_or_404
 from . import serializers as seria
-from ai_appinterviewer.models import UserProfile, Category, product
+from ai_appinterviewer.models import UserProfile, Category, product, ProductsImages
+from django.core.files.storage import default_storage
 
 # CREATE USER:
 class RegisterView(APIView):
@@ -719,6 +720,7 @@ class ProductUpdateView(APIView):
             
             if serializer.is_valid():
                 serializer.save()
+                
                 return Response({
                     
                     'Status': 'Success',
@@ -754,12 +756,15 @@ class ProductDeleteView(APIView):
             
             prod = product.objects.get(pk=pk)
             
+            if prod.prod_image:
+                default_storage.delete(prod.prod_image.name)
+                
             prod.delete()
             
             return Response({
                 
                 'Status': 'Success',
-                'Message': f'Product{pk} deleted Successfully'
+                'Message': f'Product {pk} deleted Successfully'
             }, status= status.HTTP_200_OK)
             
         except product.DoesNotExist:
@@ -771,3 +776,30 @@ class ProductDeleteView(APIView):
             }, status= status.HTTP_404_NOT_FOUND)
         
             
+# CRUD PRODUCT Images
+
+class ProdImagesCreation(APIView):
+    
+    def get(self, request):
+        
+        try:
+            
+            img = ProductsImages.objects.all()
+            
+            serializer= seria.ProdImageSerializer(img)
+            
+            return Response({
+                
+                'Status': 'Success',
+                'Data': serializer.data
+                
+            }, status= status.HTTP_200_OK)
+            
+        except ProductsImages.DoesNotExist:
+            
+            return Response({
+                
+                'Status': 'failed',
+                'Error message': "No product images exists"
+                
+            }, status= status.HTTP_200_OK)
