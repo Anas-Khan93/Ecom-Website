@@ -22,7 +22,7 @@ class UserProfile(models.Model):
     last_name = models.CharField(max_length=250)
     email = models.EmailField(unique=True)  
     password = models.CharField(max_length=128)
-    user_created_at = models.DateTimeField(auto_now_add=True)
+    user_created_at = models.DateTimeField(auto_now_add=True, null= False, blank= False)
 
     class Meta:
         db_table = 'user_profile'
@@ -50,26 +50,26 @@ class Category(models.Model):
 class product(models.Model):
     
     #define the fields here
-    cat = models.ForeignKey(Category, on_delete=models.PROTECT)
+    cat = models.ForeignKey(Category, on_delete=models.CASCADE)
     prod_id = models.AutoField(primary_key=True)
     prod_name = models.CharField(max_length= 250, blank=False, null=False)
     prod_price = models.FloatField(blank=False, null= False)
     prod_quantity = models.IntegerField(blank=False, null= False)
     prod_descr = models.TextField(blank=False, null=False)
-    prod_image= models.ImageField(upload_to= 'products/', blank=False, null=False)
     
     class Meta:
         db_table = 'proddetails'
         managed = True
 
-  
-#The PRODUCT IMAGES Model
+
+
+#The PRODUCT IMAGES Model (to store product images)
 class ProductsImages(models.Model):
     
     img_id = models.AutoField(primary_key=True)
-    prod_id = models.ForeignKey(product, on_delete=models.PROTECT)
+    prod_id = models.ForeignKey(product, on_delete=models.CASCADE)
     prod_img= models.ImageField(upload_to= 'products/', blank= False, null=False)
-    #prod_img_date
+    prod_img_date= models.DateTimeField(auto_now_add=True, null=False, blank=False)
     
     class Meta:
         db_table = 'prodimg'
@@ -78,19 +78,19 @@ class ProductsImages(models.Model):
     def save(self, *args, **kwargs):
         
         # Get the original filename
-        
         if self.prod_img:
             
-            ext = self.prod_image.name.split('.')[-1]
+            # split the filename from its extension
+            ext = self.prod_img.name.split('.')[-1]
             
             #Create a new filename using the current datetime
-            timestamp = datetime.now().strftime("%Y%m%d%H%M")
-            new_filename = f"{slugify(self.prod_name[:20])}--{timestamp}.{ext}"
+            timestamp = datetime.now().microsecond
+            new_filename = f"'ecom'{timestamp}.{ext}"
             
             # Updating the filename with the new name
             self.prod_img.name = os.path.join('products/', new_filename) 
             
-        super(product, self).save(*args, **kwargs)
+        super(ProductsImages, self).save(*args, **kwargs)
         
         
     

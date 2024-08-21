@@ -11,17 +11,18 @@ from django.core.files.storage import default_storage
 # CREATE USER
 class RegisterSerializer(serializers.Serializer):
     
-    username = serializers.CharField(required=True, max_length=250)
-    first_name = serializers.CharField( required=True, max_length=250)
-    last_name = serializers.CharField( required=True, max_length=250)
-    email = serializers.EmailField( required=True )
-    password = serializers.CharField( write_only=True, required=True, validators=[validate_password])
+    # username = serializers.CharField(required=True, max_length=250)
+    # first_name = serializers.CharField( required=True, max_length=250)
+    # last_name = serializers.CharField( required=True, max_length=250)
+    # email = serializers.EmailField( required=True )
+    # password = serializers.CharField( write_only=True, required=True, validators=[validate_password])
 
     
     class Meta:
         
         model=UserProfile
-        fields = ('username','first_name', 'last_name', 'email', 'password')
+        fields = '__all__'
+        read_only_fields = ['user', 'user_created_at']
            
     def validate_email(self,value):
         if User.objects.filter(email=value).exists():
@@ -40,7 +41,6 @@ class RegisterSerializer(serializers.Serializer):
             email = validated_data['email'],
             first_name = validated_data['first_name'],
             last_name = validated_data['last_name']
-            #is_superuser = validated_data['is_superuser']
 
         )
         user.set_password(validated_data['password'])
@@ -256,13 +256,12 @@ class BookFinderSerializer(serializers.Serializer):
         return data
     
 
-class CategoryCreationSerializer(serializers.Serializer):
+class CategoryCreationSerializer(serializers.ModelSerializer):
     
-    #these are class variables and they are used to store data when i create an instance of the class
-    #I can assign values to them, which can then be accessed and modified using methods within my class
-    cat_id = serializers.IntegerField(read_only=True) # if you don't want to ask this as input make it read only
-    cat_parent_id = serializers.IntegerField()
-    cat_name = serializers.CharField(max_length=250, required=True)
+    class Meta:
+        model = Category
+        fields= '__all__'
+        read_only_fields = ["cat_id"]
 
     # Meta class is generally used for Model Serializer REMEMBER SIMBA
 
@@ -306,9 +305,6 @@ class CategoryCreationSerializer(serializers.Serializer):
         return instance
     
 
-
-
-
                                     #NEW METHOD
 # ************************************************************************************
 #CRUD PRODUCT (using model serializer)
@@ -320,7 +316,7 @@ class ProdCreationSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = product
-        fields = ("cat", "prod_id", "prod_name", "prod_image" , "prod_price", "prod_quantity", "prod_descr")
+        fields = '__all__'
         read_only_fields= ["prod_id"]
         
         
@@ -328,16 +324,16 @@ class ProdCreationSerializer(serializers.ModelSerializer):
         
         cat = data.get('cat')
         prod_name = data.get('prod_name')
-        prod_image = data.get('prod_image')
-        prod_price = data.get('prod_price')
-        prod_quantity = data.get('prod_quantity')
-        prod_descr = data.get('prod_descr')
         
-        # NEED TO CREATE A CONDITION TO CHECK IF A PRODUCT ALREADY EXISTS IN THAT CATEGORY
+        # CHECK IF A CATEGORY WITH ID USER GAVE EXISTS
+        if not Category.objects.filter(cat=cat).exists():
+            raise serializer.ValidationError(f"Category with id:{cat} doesnot exist")
         
+        # CHECK IF A PRODUCT WITH SAME NAME ALREADY EXISTS
         if product.objects.filter(cat=cat, prod_name=prod_name).exists():
             raise serializers.ValidationError("Product already exists in that category!")
         
+        # return the validated data back to the view
         return data
     
         
@@ -347,7 +343,6 @@ class ProdCreationSerializer(serializers.ModelSerializer):
             
             cat= validated_data['cat'],
             prod_name= validated_data['prod_name'],
-            prod_image= validated_data['prod_image'],
             prod_price= validated_data['prod_price'],
             prod_quantity= validated_data['prod_quantity'],
             prod_descr= validated_data['prod_descr']
@@ -358,20 +353,14 @@ class ProdCreationSerializer(serializers.ModelSerializer):
     
     def update(self, instance, validated_data):
         
-        # Delete the previous uploaded file from the blob storage f new image is being uploaded
-        if 'prod_image' in validated_data:
-            if instance.prod_image:
-                default_storage.delete(instance.prod_image.name)
-                
         # Update the instance with new data
         instance.cat = validated_data.get('cat', instance.cat)
         instance.prod_name = validated_data.get('prod_name', instance.prod_name)
-        instance.prod_image = validated_data.get('prod_image', instance.prod_image)
         instance.prod_price = validated_data.get('prod_price', instance.prod_price)
         instance.prod_quantity = validated_data.get('prod_quantity', instance.prod_quantity)
         instance.prod_descr = validated_data.get('prod_descr', instance.prod_descr)
 
-            
+        # save the updated value before returning it to the view   
         instance.save()
         return instance
             
@@ -382,24 +371,44 @@ class ProdImageSerializer(serializers.ModelSerializer):
     class Meta:
         model = ProductsImages
         fields = ("img_id", "prod_id", "prod_img_url" )
-        read_only_fields = ["prod_id"]
+        read_only_fields = ["img_id"]
     
      
     def validate(self, data):
         
         prod_id = data.get('prod_id')
-        prod_img_url = data.get('prod_url')
+        
+        # CHECK IF THE PRODUCT_ID USER PROVIDED EXISTS IN PRODUCTS if not then RAISE ERROR
+        if not product.objects.filter(prod_id= prod_id).exists:
+            raise serializers.ValidationError("Produc with product-id:{prod_id} does not exist.")
         
         return data
-    
+        
     
     def create(self, validated_data):
         
         prodimg = ProductsImages.objects.create(
             
             prod_id= validated_data['prod_id'],
-            prod_img_url= validated_data['prod_img_url'],
+            prod_img= validated_data['prod_img'],
             
         )
         
         return prodimg
+    
+    
+    def update(self, instance, validated_data): 
+        
+        # DELETE PREVIOUS IMAGE FILE UPLOADED TO BLOB STORAGE BEFORE UPLOADING NEW IMAGE
+        if 'prod_img' in validated_data:
+            if instance.prod_img:
+                default_storage.delete(instance.prod_img.name)
+        
+        # UPDATE INSTANCE WITH NEW DATA
+        instance.prod_id = validated_data.get('prod_id', instance.prod_id)
+        instance.prod_img = validated_data.get('prod_img', instance.prod_img)
+        
+        # SAVE THE UPDATED INSTANCE
+        instance.save()
+        
+        return instance
