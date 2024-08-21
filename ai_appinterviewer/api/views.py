@@ -18,7 +18,7 @@ from django.core.mail import send_mail
 from django.utils.http import urlsafe_base64_decode
 from django.shortcuts import get_object_or_404
 from . import serializers as seria
-from ai_appinterviewer.models import UserProfile, Category, product, ProductsImages
+from ai_appinterviewer.models import UserProfile, Category, product
 from django.core.files.storage import default_storage
 
 # CREATE USER:
@@ -628,6 +628,7 @@ class CategoryDeleteView(APIView):
             
                      
 
+
 # CRUD PRODUCT
 class ProdCreationView(APIView):
     
@@ -778,7 +779,34 @@ class ProductDeleteView(APIView):
             
 # CRUD PRODUCT Images
 
-class ProdImagesCreation(APIView):
+
+class ProdImagesCreationView(APIView):
+    
+    def post(self, data):
+        
+        serializer = seria.ProductsImages(data= request.data)
+        
+        if serializer.is_valid():
+            
+            serializer.save()
+            
+            return Response({
+                
+                'Status': 'success',
+                'Data': serializer.data
+                
+            }, status= status.HTTP_200_OK)
+        else:
+            return Response({
+                
+                'Status': 'Failed',
+                'Error message': serializer.errors
+                
+            })
+
+
+
+class ProdImagesListView(APIView):
     
     def get(self, request):
         
@@ -786,7 +814,7 @@ class ProdImagesCreation(APIView):
             
             img = ProductsImages.objects.all()
             
-            serializer= seria.ProdImageSerializer(img)
+            serializer= seria.ProdImageSerializer(img, many=True)
             
             return Response({
                 
@@ -802,4 +830,90 @@ class ProdImagesCreation(APIView):
                 'Status': 'failed',
                 'Error message': "No product images exists"
                 
+            }, status= status.HTTP_404_NOT_FOUND)
+
+
+
+class ProdImagesSingleView(APIView):
+    
+    def get(self, request, pk):
+        
+        try:
+            img = ProductsImages.objects.get(pk=pk)
+            serializer = seria.ProdImageSerializer(img)
+            
+            return Response({
+                
+                'Status': 'Success',
+                'Data': serializer.data
+                
             }, status= status.HTTP_200_OK)
+            
+        except ProductsImages.DoesNotExist:
+            return Response({
+                
+                'Status': 'Failed',
+                'Error message': ' No image found'
+                
+            }, status= status.HTTP_404_NOT_FOUND)
+                            
+                            
+
+class ProdImagesUpdView(APIView):
+    
+    def put(self, request, pk):
+        
+        try:
+            
+            img = ProductsImages.objects.get(pk=pk)
+            
+            serializer = seria.ProdImageSerializer(img, data=request.data, partial=True)
+            
+            if serializer.is_valid():
+                serializer.save()
+                
+                return Response({
+                    
+                    'Status': 'Success',
+                    'Message': f'image with id:{pk} has been updated',
+                    'Data': serializer.data
+                    
+                }, status= status.HTTP_200_OK)
+            
+        except ProductsImages.DoesNotExist: 
+            return Response({
+                
+                'Status': 'Failed',
+                'Error message': f' No image with id:{pk} exists'
+                
+            }, status= status.HTTP_404_NOT_FOUND)
+        
+
+
+class ProdImagesDelView(APIView):
+    
+    def delete(self, request, pk):
+        
+        try:
+            img = ProductsImages.objects.get(pk=pk)
+            
+            if img.prod_img:
+                default_storage.delete(img.prod_img.name)
+                
+            img.delete()
+            
+            return Response({
+                
+                'Satus': 'Success',
+                'Message': f'image id:{pk} successfully deleted'
+                
+            }, status= status.HTTP_200_OK)
+            
+        except ProductsImages.DoesNotExist:
+            
+            return Response({
+                
+                'Status': 'Failed',
+                'Error message': f' No image with id:{pk} exists'
+                
+            }, status= status.HTTP_404_NOT_FOUND)
