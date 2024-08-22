@@ -28,6 +28,12 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.0/howto/deployment/checklist/
 
 
+# Initialize environment variables
+env= environs.Env()
+
+# Read the .env file
+environs.Env.read_env()
+
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
@@ -63,7 +69,7 @@ SIMPLE_JWT = {
     'ROTATE_REFRESH_TOKENS': True,
     'BLACKLIST_AFTER_ROTATION': True,
     'ALGORITHM': 'HS256',
-    'SIGNING_KEY': SECRET_KEY,
+    'SIGNING_KEY': env("MY_SECRET_KEY"),
     'VERIFYING_KEY': None,
     'AUDIENCE': None,
     'ISSUER': None,
@@ -113,11 +119,6 @@ WSGI_APPLICATION = 'ai_interviewer.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
 
-# Initialize environment variables
-env= environs.Env()
-
-# Read the .env file
-environs.Env.read_env()
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = env('MY_SECRET_KEY', default= 'Found no secret key')
