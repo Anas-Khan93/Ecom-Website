@@ -120,7 +120,7 @@ env= environs.Env()
 environs.Env.read_env()
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = env('SECRET_KEY', default= 'Found no secret key')
+SECRET_KEY = env('MY_SECRET_KEY', default= 'Found no secret key')
 
 
 DATABASES = {
