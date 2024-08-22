@@ -10,6 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.0/ref/settings/
 """
 import os
+import environs
 #import storages
 from datetime import timedelta
 
@@ -26,8 +27,6 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.0/howto/deployment/checklist/
 
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-ic)z-(x!@nilwtvx%pzn0%g&w+s)^di(6@h)^da1+**#))j0h0'
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -114,20 +113,34 @@ WSGI_APPLICATION = 'ai_interviewer.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
 
-DATABASES = {
-    'default': {
-        'ENGINE': os.getenv("ENGINE", default=""),
-        'NAME': os.getenv("NAME", default=""),
-        'USER': os.getenv("USER", default=""),
-        'PASSWORD': os.getenv("PASSWORD", default=""),
-        'HOST' : os.getenv("HOST", default=""),
-        'PORT' : os.getenv("PORT", default=""),
-        'OPTIONS':{
-            
-        },
+# Initialize environment variables
+env= environs.Env()
 
-    },
+# Read the .env file
+environs.Env.read_env()
+
+# SECURITY WARNING: keep the secret key used in production secret!
+SECRET_KEY = env('SECRET_KEY', default= 'Found no secret key')
+
+
+DATABASES = {
+    'default': env.db()
 }
+
+# DATABASES = {
+#     'default': {
+#         'ENGINE': os.getenv("ENGINE", default=""),
+#         'NAME': os.getenv("NAME", default=""),
+#         'USER': os.getenv("USER", default=""),
+#         'PASSWORD': os.getenv("PASSWORD", default=""),
+#         'HOST' : os.getenv("HOST", default=""),
+#         'PORT' : os.getenv("PORT", default=""),
+#         'OPTIONS':{
+            
+#         },
+
+#     },
+# }
 
 # Password validation
 # https://docs.djangoproject.com/en/5.0/ref/settings/#auth-password-validators
@@ -177,21 +190,20 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 
 
-#Azure Storage Configuration
-# AZURE_ACCOUNT_NAME = os.getenv("AZURE_ACCOUNT_NAME", default="")  # Your Azure Storage Account name
-# AZURE_ACCOUNT_KEY = os.getenv("AZURE_ACCOUNT_KEY", default="")    # Your Azure Storage Account key
-AZURE_CONTAINER = 'media'     # The name of your container
-AZURE_CUSTOM_DOMAIN = f'{os.getenv("AZURE_ACCOUNT_NAME")}.blob.core.windows.net'
+# AZURE STORAGE CONFIGURATION
+
+AZURE_CONTAINER = env("AZURE_CONTAINER")     # The name of your container
+AZURE_CUSTOM_DOMAIN = f'{env("AZURE_ACCOUNT_NAME")}.blob.core.windows.net'
 
 
 STORAGES = {
     "default": {
         "BACKEND": "storages.backends.azure_storage.AzureStorage",
         "OPTIONS": {
-            "account_name": os.getenv("AZURE_ACCOUNT_NAME"),
-            "account_key" : os.getenv("AZURE_ACCOUNT_KEY"),
-            "azure_container": "media",
-            "custom_domain": f'{os.getenv("AZURE_ACCOUNT_NAME")}.blob.core.windows.net' ,
+            "account_name": env("AZURE_ACCOUNT_NAME"),
+            "account_key" : env("AZURE_ACCOUNT_KEY"),
+            "azure_container": env("AZURE_CONTAINER"),
+            "custom_domain": f'{env("AZURE_ACCOUNT_NAME")}.blob.core.windows.net' ,
         },
     },
     "staticfiles": {
