@@ -38,7 +38,7 @@ environs.Env.read_env()
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['mytest-ecom-app-ghcdcpbugddhe6gz.eastus2-01.azurewebsites.net']
 
 
 # Application definition
