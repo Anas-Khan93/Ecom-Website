@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/5.0/ref/settings/
 """
 import os
 import environs
+import dj_database_url
 #import storages
 from datetime import timedelta
 
@@ -125,7 +126,7 @@ SECRET_KEY = env('MY_SECRET_KEY', default= 'Found no secret key')
 
 
 DATABASES = {
-    'default': env.db()
+    'default': dj_database_url.parse(os.getenv('DATABASE_URL'))
 }
 
 # DATABASES = {
