@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/5.0/ref/settings/
 import os
 import environs
 import dj_database_url
+import mimetypes
 #import storages
 from datetime import timedelta
 
@@ -179,6 +180,8 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.0/howto/static-files/
 
 
+
+mimetypes.add_type("text/css", ".css", True)
 STATIC_URL = '/static/'
 
 # Directory where static files are stored for deployment after running collectstatic
@@ -198,9 +201,6 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # AZURE STORAGE CODE PART:
 
 # settings.py
-
-
-
 # AZURE STORAGE CONFIGURATION
 
 AZURE_CONTAINER = env("AZURE_CONTAINER")     # The name of your container
