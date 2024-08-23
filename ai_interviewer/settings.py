@@ -39,7 +39,7 @@ environs.Env.read_env()
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['mytest-ecom-app-ghcdcpbugddhe6gz.eastus2-01.azurewebsites.net']
+ALLOWED_HOSTS = ['mytest-ecom-app-ghcdcpbugddhe6gz.eastus2-01.azurewebsites.net', '127.0.0.1']
 
 
 # Application definition
@@ -129,6 +129,7 @@ SECRET_KEY = env('MY_SECRET_KEY', default= 'Found no secret key')
 DATABASES = {
     'default': dj_database_url.parse(os.getenv('DATABASE_URL'))
 }
+
 
 # DATABASES = {
 #     'default': {
