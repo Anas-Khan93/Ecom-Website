@@ -200,6 +200,7 @@ STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 #     os.path.join(BASE_DIR, 'static')
 # ]
 
+
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
 
@@ -215,22 +216,19 @@ AZURE_CONTAINER = env("AZURE_CONTAINER")     # The name of your container
 AZURE_CUSTOM_DOMAIN = f'{env("AZURE_ACCOUNT_NAME")}.blob.core.windows.net'
 
 
-STORAGES = {
-    "default": {
-        "BACKEND": "storages.backends.azure_storage.AzureStorage",
-        "OPTIONS": {
-            "account_name": env("AZURE_ACCOUNT_NAME"),
-            "account_key" : env("AZURE_ACCOUNT_KEY"),
-            "azure_container": env("AZURE_CONTAINER"),
-            "custom_domain": f'{env("AZURE_ACCOUNT_NAME")}.blob.core.windows.net' ,
-        },
-    },
-    "staticfiles": {
-        "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
-    },
-}
+# STORAGES = {
+#     "default": {
+#         "BACKEND": "storages.backends.azure_storage.AzureStorage",
+#         "OPTIONS": {
+#             "account_name": env("AZURE_ACCOUNT_NAME"),
+#             "account_key" : env("AZURE_ACCOUNT_KEY"),
+#             "azure_container": env("AZURE_CONTAINER"),
+#             "custom_domain": f'{env("AZURE_ACCOUNT_NAME")}.blob.core.windows.net' ,
+#         },
+#     },
+# }
 
-#DEFAULT_FILE_STORAGE = 'ai_interviewer.custom_azure.AzureMediaStorage'
+DEFAULT_FILE_STORAGE = 'ai_interviewer.custom_azure.AzureMediaStorage'
 # AZURE_URL_EXPIRATION_SECS = None  # For public access, otherwise set expiration
 MEDIA_URL = f'https://{AZURE_CUSTOM_DOMAIN}/{AZURE_CONTAINER}/'
 
