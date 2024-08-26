@@ -35,7 +35,7 @@ env= environs.Env()
 environs.Env.read_env()
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
 # ALLOWED_HOSTS = ['mytest-ecom-app-ghcdcpbugddhe6gz.eastus2-01.azurewebsites.net', '127.0.0.1', '169.254.130.7']
 
