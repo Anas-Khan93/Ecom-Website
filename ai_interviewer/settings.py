@@ -91,6 +91,10 @@ SIMPLE_JWT = {
 # }
 
 
+CSRF_TRUSTED_ORIGINS = [
+    'https://mytest-ecom-app-ghcdcpbugddhe6gz.eastus2-01.azurewebsites.net',
+]
+
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
