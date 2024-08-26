@@ -41,7 +41,7 @@ DEBUG = True
 
 # ALLOWED_HOSTS = ['mytest-ecom-app-ghcdcpbugddhe6gz.eastus2-01.azurewebsites.net', '127.0.0.1', '169.254.130.7']
 
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = ['https://mytest-ecom-app-ghcdcpbugddhe6gz.eastus2-01.azurewebsites.net', 'localhost']
 
 
 
@@ -61,6 +61,9 @@ INSTALLED_APPS = [
     'ai_appinterviewer',
     'storages',
 ]
+
+
+# JWT CONFIGURATION:
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
