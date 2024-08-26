@@ -17,8 +17,6 @@ import mimetypes
 from datetime import timedelta
 
 from dotenv import load_dotenv
-# load environment from the .env file
-load_dotenv()
 
 from pathlib import Path
 
@@ -41,7 +39,7 @@ DEBUG = True
 
 # ALLOWED_HOSTS = ['mytest-ecom-app-ghcdcpbugddhe6gz.eastus2-01.azurewebsites.net', '127.0.0.1', '169.254.130.7']
 
-ALLOWED_HOSTS = ['https://mytest-ecom-app-ghcdcpbugddhe6gz.eastus2-01.azurewebsites.net', 'localhost']
+ALLOWED_HOSTS = ['*' ,'mytest-ecom-app-ghcdcpbugddhe6gz.eastus2-01.azurewebsites.net', 'localhost']
 
 
 
@@ -225,7 +223,7 @@ STORAGES = {
         },
     },
     "staticfiles": {
-        "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",        
+        "BACKEND": "storages.backends.azure_storage.AzureStorage",
     },
 }
 
