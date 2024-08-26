@@ -95,6 +95,11 @@ CSRF_TRUSTED_ORIGINS = [
     'https://mytest-ecom-app-ghcdcpbugddhe6gz.eastus2-01.azurewebsites.net',
 ]
 
+CSRF_COOKIE_SECURE = True
+
+#OPTIONAL:
+CSRF_COOKIE_DOMAIN = '.mytest-ecom-app-ghcdcpbugddhe6gz.eastus2-01.azurewebsites.net'
+
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
