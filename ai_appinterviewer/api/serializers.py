@@ -414,10 +414,18 @@ class ProdImageSerializer(serializers.ModelSerializer):
         return instance
     
     
+   
     
+# class OrderSerializer(serializers.ModelSerializer):
     
+#     class Meta:
+#         fields = '__all__'
+#         read_only_fields = ['order_id']
     
-class OrderSerializer(serializers.ModelSerializer):
-    
-    fields = '__all__'
-    read_only_fields = ['']
+#     def validate(self, data):
+        
+#         user = data.get('user')
+#         prod = data.get('prod')
+        
+        
+        

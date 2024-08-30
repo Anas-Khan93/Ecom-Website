@@ -206,7 +206,6 @@ class Order(models.Model):
     order_total_amount = models.FloatField(db_column= 'total_amount')
     order_stat = models.ForeignKey(OrderStatus, on_delete=models.CASCADE, db_column= 'order_status' )
     order_notes = models.TextField(blank= True, null= True)
-    order_stat = models.ForeignKey (OrderStatus, on_delete=models.CASCADE, db_column= 'order_status_id')
     
     # PAYMENT KEYS:
     paym_id = models.ForeignKey(PaymentMethod, on_delete=models.CASCADE, db_column= 'payment_method_id')

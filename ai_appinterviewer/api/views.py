@@ -912,19 +912,19 @@ class ProdImagesDelView(APIView):
 
 # CRUD ORDERS:
 
-class OrderCreationView(APIView):
+# class OrderCreationView(APIView):
     
-    def post(self, request, data):
-        try:
-            order = Orders
+#     def post(self, request, data):
+#         try:
+#             serializer = seria.OrderSerializer(data= request.data)
             
-        except:
-            return Response({
+#         except:
+#             return Response({
                 
-                'Status': 'Success',
-                'Error message': ' No orders to process'
+#                 'Status': 'Success',
+#                 'Error message': ' No orders to process'
                 
-            })
+#             })
 
 
 
