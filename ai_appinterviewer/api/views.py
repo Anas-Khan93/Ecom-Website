@@ -20,8 +20,11 @@ from django.shortcuts import get_object_or_404
 from . import serializers as seria
 from ai_appinterviewer.models import UserProfile, Category, product
 from django.core.files.storage import default_storage
+import stripe
 
-# CREATE USER:
+
+
+# CRUD USER:
 class RegisterView(APIView):
     
     permission_classes = [AllowAny]
@@ -45,7 +48,6 @@ class RegisterView(APIView):
         except:
             print("Exception occurred")
  
-
                      
 class LoginView(APIView):
     permission_classes = [AllowAny]
@@ -87,8 +89,6 @@ class LoginView(APIView):
         # }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
-
-# READ ALL USERS (REQUIRES ADMIN PRIVILIDGES):
 class UserListView(APIView):
     
     permission_classes= [IsAdminUser, IsAuthenticated]
@@ -110,8 +110,6 @@ class UserListView(APIView):
         }, status= status.HTTP_200_OK )      
         
 
-
-# READ USER (REQUIRES USER/ADMIN TO BE LOGGED IN ):
 class UserProfileView(APIView):
     
     authentication_classes = [JWTAuthentication]
@@ -158,8 +156,6 @@ class UserProfileView(APIView):
     # def delete(self, request, pk, format=None):
 
 
-
-# UPDATE USER (REQUIRES USER/ADMIN TO BE LOGGED IN):
 class UserUpdateView(APIView):
     
     authentication_classes= [JWTAuthentication]
@@ -202,8 +198,6 @@ class UserUpdateView(APIView):
             }, status= status.HTTP_404_NOT_FOUND)
             
 
-
-# DELETE USER (REQUIRES USER TO BE LOGGED IN):
 class UserDeleteView(APIView):
     
     permission_classes = [IsAdminUser ,IsAuthenticated]
@@ -248,7 +242,6 @@ class UserDeleteView(APIView):
             }, status= status.HTTP_400_BAD_REQUEST)
 
 
-
 class PasswordResetView(APIView):
     
     permission_classes=[AllowAny]
@@ -278,7 +271,6 @@ class PasswordResetView(APIView):
         return Response(serializer.errors, status= status.HTTP_400_BAD_REQUEST)
 
  
- 
 class PasswordResetConfirmView(APIView):
     permission_classes = [AllowAny]
     
@@ -303,7 +295,6 @@ class PasswordResetConfirmView(APIView):
             return Response({'error':'Invalid token or user ID'}, status= status.HTTP_400_BAD_REQUEST)
    
   
-
 class ProductProfitCalculator(APIView):
     permission_classes = [AllowAny]
     
@@ -334,8 +325,7 @@ class ProductProfitCalculator(APIView):
                 'Error Message': serializer.errors
             }, status=status.HTTP_400_BAD_REQUEST)
  
-            
-            
+                      
 class EmiCalculatorView(APIView):
     
     permission_classes= [AllowAny]
@@ -363,7 +353,6 @@ class EmiCalculatorView(APIView):
                 
             }, status= status.HTTP_400_BAD_REQUEST)    
         
-
 
 class BookFinder(APIView):
     
@@ -443,6 +432,8 @@ class BookFinder(APIView):
                     'Error message': serializer.errors
                 
             }, status =status.HTTP_400_BAD_REQUEST )
+
+
 
 
 
@@ -629,6 +620,7 @@ class CategoryDeleteView(APIView):
                      
 
 
+
 # CRUD PRODUCT
 class ProdCreationView(APIView):
     
@@ -776,10 +768,11 @@ class ProductDeleteView(APIView):
                 
             }, status= status.HTTP_404_NOT_FOUND)
         
+       
+       
+       
             
 # CRUD PRODUCT Images
-
-
 class ProdImagesCreationView(APIView):
     
     def post(self, data):
@@ -803,7 +796,6 @@ class ProdImagesCreationView(APIView):
                 'Error message': serializer.errors
                 
             })
-
 
 
 class ProdImagesListView(APIView):
@@ -833,7 +825,6 @@ class ProdImagesListView(APIView):
             }, status= status.HTTP_404_NOT_FOUND)
 
 
-
 class ProdImagesSingleView(APIView):
     
     def get(self, request, pk):
@@ -856,8 +847,7 @@ class ProdImagesSingleView(APIView):
                 'Error message': ' No image found'
                 
             }, status= status.HTTP_404_NOT_FOUND)
-                            
-                            
+                                                       
 
 class ProdImagesUpdView(APIView):
     
@@ -888,8 +878,7 @@ class ProdImagesUpdView(APIView):
                 
             }, status= status.HTTP_404_NOT_FOUND)
         
-
-
+        
 class ProdImagesDelView(APIView):
     
     def delete(self, request, pk):
@@ -917,3 +906,28 @@ class ProdImagesDelView(APIView):
                 'Error message': f' No image with id:{pk} exists'
                 
             }, status= status.HTTP_404_NOT_FOUND)
+            
+            
+            
+
+# CRUD ORDERS:
+
+class OrderCreationView(APIView):
+    
+    def post(self, request, data):
+        try:
+            order = Orders
+            
+        except:
+            return Response({
+                
+                'Status': 'Success',
+                'Error message': ' No orders to process'
+                
+            })
+
+
+
+
+
+# CRUD TRANSACTION

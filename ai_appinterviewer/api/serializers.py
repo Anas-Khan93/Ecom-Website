@@ -370,16 +370,16 @@ class ProdImageSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = ProductsImages
-        fields = ("img_id", "prod_id", "prod_img_url" )
+        fields = ("img_id", "prod", "prod_img_url" )
         read_only_fields = ["img_id"]
     
      
     def validate(self, data):
         
-        prod_id = data.get('prod_id')
+        prod_id = data.get('prod')
         
         # CHECK IF THE PRODUCT_ID USER PROVIDED EXISTS IN PRODUCTS if not then RAISE ERROR
-        if not product.objects.filter(prod_id= prod_id).exists:
+        if not product.objects.filter(prod_id= prod).exists:
             raise serializers.ValidationError("Produc with product-id:{prod_id} does not exist.")
         
         return data
@@ -412,3 +412,12 @@ class ProdImageSerializer(serializers.ModelSerializer):
         instance.save()
         
         return instance
+    
+    
+    
+    
+    
+class OrderSerializer(serializers.ModelSerializer):
+    
+    fields = '__all__'
+    read_only_fields = ['']
