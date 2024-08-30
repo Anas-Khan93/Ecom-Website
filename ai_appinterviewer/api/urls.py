@@ -28,7 +28,22 @@ urlpatterns = [
     path('admin/product-delete/<str:pk>', views.ProductDeleteView.as_view(), name= 'product_delete' ),
     
     
-    # MISCELLANNIOUS LINKS
+    # CRUD PRODUCT IMGAES links:
+    path('admin/product-image-creation/', views.ProdImagesCreationView.as_view(), name= 'product_image_creation'),
+    path('product-images/', views.ProdImagesListView.as_view(), name= 'product_images_view'),
+    path('product-images/<str:pk>', views.ProdImagesSingleView.as_view(), name= 'product_image_view'),
+    path('product-images/update/', views.ProductUpdateView.as_view(), name= 'product_image_update'),
+    path('admin/product-images/delete/<str:pk>', views.ProductDeleteView.as_view(), name= 'product_image_delete'),
+    
+    
+    # CRUD ORDER 
+    
+    
+    # CRUD TRANSACTION
+    
+    
+    # MISCELLANNIOUS LINKS:
+    
     # USER login:
     path('login/', views.LoginView.as_view(), name='login'),
     
