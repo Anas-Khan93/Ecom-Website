@@ -80,7 +80,7 @@ class product(models.Model):
         managed = True
     
     # method for soft delete:
-    class delete(self, *args, **kwargs):
+    def delete(self, *args, **kwargs):
         
         self.is_deleted = True
         self.save()
@@ -143,7 +143,7 @@ class OrderStatus(models.Model):
 class PaymentMethod(models.Model):
     
     paym_id = models.AutoField(primary_key= True)
-    paymethod = models.CharField(max_length= 500, blank=false, null= False, db_column= 'payment_method')
+    paymethod = models.CharField(max_length= 500, blank=False, null= False, db_column= 'payment_method')
     
     class Meta:
         db_table = 'payment_method'
