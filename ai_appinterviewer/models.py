@@ -61,7 +61,7 @@ class ProductManager(models.Manager):
 
  
 # PRODUCT MODEL:
-class product(models.Model):
+class Product(models.Model):
     
     # define the fields here:
     cat = models.ForeignKey(Category, on_delete=models.CASCADE, db_column='cat_id')

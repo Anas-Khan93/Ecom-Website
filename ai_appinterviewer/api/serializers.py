@@ -4,9 +4,10 @@ from django.contrib.auth import authenticate
 from django.contrib.auth.models import User
 from django.contrib.auth.password_validation import validate_password
 from django_rest_passwordreset.tokens import get_token_generator
-from ai_appinterviewer.models import Category, UserProfile, product, ProductsImages
+from ai_appinterviewer.models import Category, UserProfile, Product, ProductsImages
 import logging
 from django.core.files.storage import default_storage
+
 
 # CREATE USER
 class RegisterSerializer(serializers.Serializer):
@@ -57,7 +58,8 @@ class RegisterSerializer(serializers.Serializer):
             )
         
         return user_profile
-  
+
+
 
 class LoginSerializer(serializers.Serializer):
     
@@ -85,6 +87,8 @@ class LoginSerializer(serializers.Serializer):
         data['user'] = user
         return data
 
+
+
 # READ USER
 class UserDetailSerializer(serializers.Serializer):
     
@@ -101,6 +105,8 @@ class UserDetailSerializer(serializers.Serializer):
         
         username = validated_data['username']
         
+
+
 
 # UPDATE USER       
 class UserUpdateSerializer(serializers.Serializer):
@@ -140,6 +146,7 @@ class UserUpdateSerializer(serializers.Serializer):
         user_profile.save()
         
         return instance
+
 
 
 # Validating the user before he sending the reset link
@@ -256,6 +263,8 @@ class BookFinderSerializer(serializers.Serializer):
         return data
     
 
+
+
 class CategoryCreationSerializer(serializers.ModelSerializer):
     
     class Meta:
@@ -312,10 +321,13 @@ class CategoryCreationSerializer(serializers.ModelSerializer):
 # the serializer. 
 
 
+
+
+
 class ProdCreationSerializer(serializers.ModelSerializer):
     
     class Meta:
-        model = product
+        model = Product
         fields = '__all__'
         read_only_fields= ["prod_id"]
         
@@ -330,7 +342,7 @@ class ProdCreationSerializer(serializers.ModelSerializer):
             raise serializer.ValidationError(f"Category with id:{cat} doesnot exist")
         
         # CHECK IF A PRODUCT WITH SAME NAME ALREADY EXISTS
-        if product.objects.filter(cat=cat, prod_name=prod_name).exists():
+        if Product.objects.filter(cat=cat, prod_name=prod_name).exists():
             raise serializers.ValidationError("Product already exists in that category!")
         
         # return the validated data back to the view
@@ -339,7 +351,7 @@ class ProdCreationSerializer(serializers.ModelSerializer):
         
     def create(self, validated_data):
         
-        prod = product.objects.create(
+        prod = Product.objects.create(
             
             cat= validated_data['cat'],
             prod_name= validated_data['prod_name'],
@@ -365,6 +377,8 @@ class ProdCreationSerializer(serializers.ModelSerializer):
         return instance
             
 
+
+
     
 class ProdImageSerializer(serializers.ModelSerializer):
     
@@ -379,7 +393,7 @@ class ProdImageSerializer(serializers.ModelSerializer):
         prod_id = data.get('prod')
         
         # CHECK IF THE PRODUCT_ID USER PROVIDED EXISTS IN PRODUCTS if not then RAISE ERROR
-        if not product.objects.filter(prod_id= prod).exists:
+        if not Product.objects.filter(prod_id= prod).exists:
             raise serializers.ValidationError("Produc with product-id:{prod_id} does not exist.")
         
         return data

@@ -18,9 +18,10 @@ from django.core.mail import send_mail
 from django.utils.http import urlsafe_base64_decode
 from django.shortcuts import get_object_or_404
 from . import serializers as seria
-from ai_appinterviewer.models import UserProfile, Category, product
+from ai_appinterviewer.models import UserProfile, Category, Product
 from django.core.files.storage import default_storage
 import stripe
+
 
 
 
@@ -437,6 +438,7 @@ class BookFinder(APIView):
 
 
 
+
 # CRUD CATEGORY
 class CategoryCreationView(APIView):
     
@@ -504,16 +506,19 @@ class CategorySingleView(APIView):
     def get(self, request, pk):
         
         try:
+            # get the category
             cat = Category.objects.get(pk=pk)
-            #print(cat)
-            subcat = Category.objects.filter(cat_parent_id=pk)
-            #print(subcat)
             
+            # get all it's subcategories
+            subcat = Category.objects.filter(cat_parent_id=pk)
+            
+            # pass both in the serializer
             serializer = seria.CategoryCreationSerializer(cat)
             subserializer = seria.CategoryCreationSerializer(subcat, many=True)
+            
+            # create an empty array to insert all subcat
             array= []
             
-            #print(int(subserializer.data['cat_parent_id']))
             
             for subcat_data in subserializer.data:
                 id= (int(subcat_data['cat_id']))
@@ -616,8 +621,10 @@ class CategoryDeleteView(APIView):
                 'Error message': 'Category does not exist'
                 
             }, status= status.HTTP_404_NOT_FOUND)
-            
-                     
+   
+         
+                  
+
 
 
 
@@ -653,7 +660,7 @@ class ProductListView(APIView):
         
         try:
         
-            prod = product.objects.all()
+            prod = Product.objects.all()
         
             serializer = seria.ProdCreationSerializer(prod, many=True)
             
@@ -664,7 +671,7 @@ class ProductListView(APIView):
                 
             }, status= status.HTTP_200_OK)
             
-        except product.DoesNotExist:
+        except Product.DoesNotExist:
             
             return Response({
                 
@@ -679,7 +686,7 @@ class ProductSingleView(APIView):
     def get(self, request, pk):
         
         try: 
-            prod = product.objects.get(pk=pk)
+            prod = Product.objects.get(pk=pk)
             
             serializer = seria.ProdCreationSerializer(prod)
             
@@ -692,7 +699,7 @@ class ProductSingleView(APIView):
                 
             }, status= status.HTTP_200_OK)
             
-        except product.DoesNotExist:
+        except Product.DoesNotExist:
             return Response({
                 
                 'Status': 'failed',
@@ -707,7 +714,7 @@ class ProductUpdateView(APIView):
         
         try:
             
-            prod = product.objects.get(pk=pk)
+            prod = Product.objects.get(pk=pk)
             
             serializer = seria.ProdCreationSerializer(prod, data=request.data, partial=True)
             
@@ -728,7 +735,8 @@ class ProductUpdateView(APIView):
                     'error': serializer.errors
                     
                 }, status= status.HTTP_400_BAD_REQUEST)
-        except product.DoesNotExist:
+                
+        except Product.DoesNotExist:
             
             return Response({
                 
@@ -747,7 +755,7 @@ class ProductDeleteView(APIView):
         
         try:
             
-            prod = product.objects.get(pk=pk)
+            prod = Product.objects.get(pk=pk)
             
             if prod.prod_image:
                 default_storage.delete(prod.prod_image.name)
@@ -760,7 +768,7 @@ class ProductDeleteView(APIView):
                 'Message': f'Product {pk} deleted Successfully'
             }, status= status.HTTP_200_OK)
             
-        except product.DoesNotExist:
+        except Product.DoesNotExist:
             return Response({
                 
                 'Status': 'failed',
@@ -768,8 +776,10 @@ class ProductDeleteView(APIView):
                 
             }, status= status.HTTP_404_NOT_FOUND)
         
-       
-       
+
+      
+
+      
        
             
 # CRUD PRODUCT Images
