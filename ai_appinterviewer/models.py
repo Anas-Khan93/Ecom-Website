@@ -93,7 +93,7 @@ class Product(models.Model):
 class ProductsImages(models.Model):
     
     img_id = models.AutoField(primary_key=True)
-    prod_id = models.ForeignKey(product, on_delete=models.CASCADE, db_column='prod_id')
+    prod_id = models.ForeignKey(Product, on_delete=models.CASCADE, db_column='prod_id')
     prod_img= models.ImageField(upload_to= 'products/', blank= False, null=False)
     prod_img_date= models.DateTimeField(auto_now_add=True, null=False, blank=False)
     
@@ -198,7 +198,7 @@ class Order(models.Model):
     # GENERAL KEYS
     order_id = models.AutoField(primary_key= True, db_column='order_id')
     user = models.ForeignKey(UserProfile, on_delete=models.CASCADE, db_column= 'user_id')
-    prod = models.ForeignKey(product, on_delete=models.CASCADE, db_column= 'prod_id')
+    prod = models.ForeignKey(Product, on_delete=models.CASCADE, db_column= 'prod_id')
     customer_email = models.EmailField(null= False, blank= False)
     
     # ORDER variables:

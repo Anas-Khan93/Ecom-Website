@@ -252,12 +252,12 @@ class PasswordResetView(APIView):
         
         if serializer.is_valid():
             email = serializer.validated_data['email']
-            user = user.objects.get(email=email)
+            user = User.objects.get(email=email)
             token_generator = get_token_generator()
-            token = token_generator.make_token(token)
+            token = token_generator.make_token(user)
             
             rest_url = request.build_absolute_uri(
-                reverse('password_reset_confirm', kwargs={'token',token})
+                reverse('password_reset_confirm', kwargs={'token': token})
             )
             
             send_mail(
@@ -279,23 +279,33 @@ class PasswordResetConfirmView(APIView):
         
         try:
             uid = urlsafe_base64_decode(uidb64).decode()
-            user = get_object_or_404(User, pk=id)
+            user = get_object_or_404(User, pk=uid)
         except(TypeError, ValueError, OverflowError, User.DoesNotExist):
             user = None
             
         if user is not None and default_token_generator.check_token(user, token):
-            serializer = SetNewPasswordSerializer(data=request.data)
+            serializer = PasswordResetConfirmSerializer(data=request.data)
             
             if serializer.is_valid():
                 user.set_password(serializer.validated_data['new password'])
                 user.save()
-                return Response({'message': 'Password has been reset successfully'}, status=status.HTTP_200_OK)
+                return Response({
+                    'Status': 'Success',
+                    'message': 'Password has been reset successfully'
+                    }, status=status.HTTP_200_OK)
             else:
                 return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         else:
-            return Response({'error':'Invalid token or user ID'}, status= status.HTTP_400_BAD_REQUEST)
+            return Response({
+                
+                'error':'Invalid token or user ID'
+                
+                }, status= status.HTTP_400_BAD_REQUEST)
    
-  
+
+
+
+# MISCELANIOUS API CALLS FOR PRACTICE:
 class ProductProfitCalculator(APIView):
     permission_classes = [AllowAny]
     
@@ -436,7 +446,7 @@ class BookFinder(APIView):
 
 
 
-
+    
 
 
 # CRUD CATEGORY
