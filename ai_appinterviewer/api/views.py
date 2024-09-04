@@ -17,7 +17,8 @@ from django.conf import settings
 from django.core.mail import send_mail
 from django.utils.http import urlsafe_base64_decode
 from django.shortcuts import get_object_or_404
-from . import serializers as seria
+from . import serializers
+from .. import models
 from ai_appinterviewer.models import UserProfile, Category, Product
 from django.core.files.storage import default_storage
 import stripe
@@ -34,7 +35,7 @@ class RegisterView(APIView):
     def post(self, request):
         
         try:
-            serializer = seria.RegisterSerializer(data=request.data)
+            serializer = RegisterSerializer(data=request.data)
             
             if serializer.is_valid():
                 serializer.save()
@@ -54,7 +55,7 @@ class LoginView(APIView):
     permission_classes = [AllowAny]
     
     def post(self, request):
-        serializer = seria.LoginSerializer(data=request.data)
+        serializer = LoginSerializer(data=request.data)
         
         if serializer.is_valid():
             username = serializer.validated_data['username']
@@ -101,7 +102,7 @@ class UserListView(APIView):
         user= User.objects.all()
         
         # we need an additional parameter that is many and it will be set to true to let the serializer know we have many objects.
-        serializer = seria.UserDetailSerializer(user, many=True)
+        serializer = UserDetailSerializer(user, many=True)
         
         return Response({
             
@@ -127,7 +128,7 @@ class UserProfileView(APIView):
             
             if user == request.user or request.user.is_superuser is True:
                 
-                serializer = seria.UserDetailSerializer(user)
+                serializer = UserDetailSerializer(user)
                 
                 return Response({
                     
@@ -169,7 +170,7 @@ class UserUpdateView(APIView):
             
             if user== request.user or request.user.is_superuser:
                 
-                serializer = seria.UserUpdateSerializer(user, data=request.data, partial=True)
+                serializer = UserUpdateSerializer(user, data=request.data, partial=True)
             
                 if serializer.is_valid():
                     serializer.save()
@@ -458,7 +459,7 @@ class CategoryCreationView(APIView):
     
     def post(self, request):
         
-        serializer = seria.CategoryCreationSerializer(data=request.data)
+        serializer = CategoryCreationSerializer(data=request.data)
         
         if serializer.is_valid():
             serializer.save()
@@ -492,7 +493,7 @@ class CategoryListView(APIView):
             cat = Category.objects.all()
             print(cat)
             
-            serializer = seria.CategoryCreationSerializer(cat, many=True)
+            serializer = CategoryCreationSerializer(cat, many=True)
             print (serializer.data)
             return Response({
                     
@@ -523,8 +524,8 @@ class CategorySingleView(APIView):
             subcat = Category.objects.filter(cat_parent_id=pk)
             
             # pass both in the serializer
-            serializer = seria.CategoryCreationSerializer(cat)
-            subserializer = seria.CategoryCreationSerializer(subcat, many=True)
+            serializer = CategoryCreationSerializer(cat)
+            subserializer = CategoryCreationSerializer(subcat, many=True)
             
             # create an empty array to insert all subcat
             array= []
@@ -534,7 +535,7 @@ class CategorySingleView(APIView):
                 id= (int(subcat_data['cat_id']))
                 c = Category.objects.filter(cat_parent_id=id)
                 if c.exists():
-                    serial = seria.CategoryCreationSerializer(c, many=True)
+                    serial = CategoryCreationSerializer(c, many=True)
                     array.append(serial.data)
             
             if subcat is None:
@@ -575,7 +576,7 @@ class CategoryUpdateView(APIView):
         try:
             cat = Category.objects.get(pk=pk)
             
-            serializer = seria.CategoryCreationSerializer(cat, data=request.data, partial=True)
+            serializer = CategoryCreationSerializer(cat, data=request.data, partial=True)
             
             if serializer.is_valid():
                 serializer.save()
@@ -643,7 +644,7 @@ class ProdCreationView(APIView):
     
     def post (self, request):
         
-        serializer = seria.ProdCreationSerializer(data=request.data)
+        serializer = ProdCreationSerializer(data=request.data)
         
         if serializer.is_valid():
             serializer.save()
@@ -672,7 +673,7 @@ class ProductListView(APIView):
         
             prod = Product.objects.all()
         
-            serializer = seria.ProdCreationSerializer(prod, many=True)
+            serializer = ProdCreationSerializer(prod, many=True)
             
             return Response({
                 
@@ -698,7 +699,7 @@ class ProductSingleView(APIView):
         try: 
             prod = Product.objects.get(pk=pk)
             
-            serializer = seria.ProdCreationSerializer(prod)
+            serializer = ProdCreationSerializer(prod)
             
             print(serializer.data)
             
@@ -726,7 +727,7 @@ class ProductUpdateView(APIView):
             
             prod = Product.objects.get(pk=pk)
             
-            serializer = seria.ProdCreationSerializer(prod, data=request.data, partial=True)
+            serializer = ProdCreationSerializer(prod, data=request.data, partial=True)
             
             if serializer.is_valid():
                 serializer.save()
@@ -797,7 +798,7 @@ class ProdImagesCreationView(APIView):
     
     def post(self, data):
         
-        serializer = seria.ProductsImages(data= request.data)
+        serializer = ProductsImages(data= request.data)
         
         if serializer.is_valid():
             
@@ -826,7 +827,7 @@ class ProdImagesListView(APIView):
             
             img = ProductsImages.objects.all()
             
-            serializer= seria.ProdImageSerializer(img, many=True)
+            serializer= ProdImageSerializer(img, many=True)
             
             return Response({
                 
@@ -851,7 +852,7 @@ class ProdImagesSingleView(APIView):
         
         try:
             img = ProductsImages.objects.get(pk=pk)
-            serializer = seria.ProdImageSerializer(img)
+            serializer = ProdImageSerializer(img)
             
             return Response({
                 
@@ -877,7 +878,7 @@ class ProdImagesUpdView(APIView):
             
             img = ProductsImages.objects.get(pk=pk)
             
-            serializer = seria.ProdImageSerializer(img, data=request.data, partial=True)
+            serializer = ProdImageSerializer(img, data=request.data, partial=True)
             
             if serializer.is_valid():
                 serializer.save()
@@ -931,23 +932,12 @@ class ProdImagesDelView(APIView):
             
 
 # CRUD ORDERS:
+# Beginning from this view, all the API methods will be called in one single class. Respecting the DRY principle and following Django's best practice.
 
-# class OrderCreationView(APIView):
+class OrderView(APIView):
     
-#     def post(self, request, data):
-#         try:
-#             serializer = seria.OrderSerializer(data= request.data)
+    def get(self, request, pk=None):
+        
+        if pk:
             
-#         except:
-#             return Response({
-                
-#                 'Status': 'Success',
-#                 'Error message': ' No orders to process'
-                
-#             })
-
-
-
-
-
-# CRUD TRANSACTION
+            serializer = Order.objects.all()

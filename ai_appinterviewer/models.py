@@ -216,7 +216,7 @@ class Order(models.Model):
     ship_status = models.ForeignKey(ShippingStatus, on_delete= models.CASCADE, db_column= 'shipment_status_id')
     
     # REQUIRED VARIABLES:
-    post_code = models.CharField(max_length= 500,  )
+    post_code = models.CharField(max_length= 500)
     deliv_add= models.TextField()
     
     # MISCELANIOUS OPTIONAL VARIABLE:
