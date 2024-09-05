@@ -934,10 +934,44 @@ class ProdImagesDelView(APIView):
 # CRUD ORDERS:
 # Beginning from this view, all the API methods will be called in one single class. Respecting the DRY principle and following Django's best practice.
 
-class OrderView(APIView):
+class CartView(APIView):
     
     def get(self, request, pk=None):
         
         if pk:
             
-            serializer = Order.objects.all()
+            cart_obj = Cart.objects.get(pk=pk) 
+            serializer = CartSerializer(ord_obj)
+            
+            try:
+                cart_obj = Cart.objects.get(pk=pk) 
+                serializer = CartSerializer(ord_obj)
+                
+                return Response({
+                        
+                    'Status': 'Failed',
+                    'data': serializer.data
+                        
+                }, status= status.HTTP_200_OK)
+                
+            except Cart.DoesNotExist:
+                return Response({
+                    
+                    'Status': 'Failed',
+                    'Error message': f'No Cart with id{pk} found'
+                    
+                }, status= status.HTTP_404_NOT_FOUND)
+                
+                
+        else:
+            
+            carts = Cart.objects.all()
+            serializer = CartSerializer(carts, many= True)
+            
+            return Response({
+                    
+                'Status': 'Success',
+                'data': serializer.data
+                    
+            }, status= status.HTTP_200_OK)
+

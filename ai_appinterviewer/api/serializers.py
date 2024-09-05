@@ -185,7 +185,9 @@ class PasswordResetConfirmSerializer(serializers.Serializer):
         user.set_password(password)
         user.save()
         
-        
+
+
+# MISC SERIALIZERS FOR DIFFERENT API CALLS AND OPERATIONS 
 class ProductProfitSerializer(serializers.Serializer):
     
     revenue = serializers.IntegerField(required=True)
@@ -264,7 +266,7 @@ class BookFinderSerializer(serializers.Serializer):
     
 
 
-
+# CRUD CATEGORY
 class CategoryCreationSerializer(serializers.ModelSerializer):
     
     class Meta:
@@ -316,13 +318,13 @@ class CategoryCreationSerializer(serializers.ModelSerializer):
 
                                     #NEW METHOD
 # ************************************************************************************
+
+
+
+
 #CRUD PRODUCT (using model serializer)
-# ModelSerializer fully maps all the fields that we want defined in our model. It helps in not having to define each value again in 
-# the serializer. 
-
-
-
-
+# FROM THIS POINT ONWARDS, serializer.serializers shall be replaced by serializer.ModelSerializer fully maps all the fields that we want defined in our model.
+# This allows us to keep away from DRY and follow Djangos best practice. 
 
 class ProdCreationSerializer(serializers.ModelSerializer):
     
@@ -379,7 +381,7 @@ class ProdCreationSerializer(serializers.ModelSerializer):
 
 
 
-    
+ #CRUD PRODUCT IMAGES SERIALIZER   
 class ProdImageSerializer(serializers.ModelSerializer):
     
     class Meta:
@@ -430,16 +432,29 @@ class ProdImageSerializer(serializers.ModelSerializer):
     
    
     
-# class OrderSerializer(serializers.ModelSerializer):
+class OrderSerializer(serializers.ModelSerializer):
     
-#     class Meta:
-#         fields = '__all__'
-#         read_only_fields = ['order_id']
+    class Meta:
+        fields = '__all__'
+        read_only_fields = ['order_id']
     
-#     def validate(self, data):
+    def validate(self, data):
         
-#         user = data.get('user')
-#         prod = data.get('prod')
+        # instead of calling each required field one by one and then validating them. We shall now store all the required fields in a list and then check the data against them
+        # refer to the MODEL to see which field is required
+        required_fields = ['user', 'prod', 'customer_email', 'post_code', 'deliv_add', 'ship_add', 'ship_method', 'paym_id', 'paystat']
+        
+        missing_fields = [ field for field in required_fields if not data.get(fields)]
+        
+        if missing_fields:
+            raise ValidationError(f"Missing required fields: {', '.join(missing_fields)}")
+        
+        
+        user = data.get('user')
+        prod = data.get('prod')
+        
+        if Product.objects.get(prod=prod):
+            return data
         
         
         

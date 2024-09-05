@@ -122,71 +122,70 @@ class ProductsImages(models.Model):
 
 
 
-
-# CRUD ORDER STATUS:
-class OrderStatus(models.Model):
+    # CART MODEL:
     
-    ord_stat_id = models.AutoField(primary_key= True)
-    ord_status = models.CharField(max_length= 500, blank= False, null= False, db_column= 'order_status')
-    ord_track_no = models.FloatField(db_column= 'order_tracking_no')
-     
+class Cart(models.Model):
+        
+    cart_id = models.AutoField(primary_key= True, db_column= 'cart_id')
+    user = models.ForeignKey(UserProfile, on_delete= models.CASCADE, db_column='user_id')
+    created_at = models.DateTimeField(auto_now_add= True)
+        
     class Meta:
-        db_table = 'order_status'
-        managed= True
-
-
-
-
-
-
-# CRUD PAYMENT METHOD:
-class PaymentMethod(models.Model):
-    
-    paym_id = models.AutoField(primary_key= True)
-    paymethod = models.CharField(max_length= 500, blank=False, null= False, db_column= 'payment_method')
-    
-    class Meta:
-        db_table = 'payment_method'
+        db_table = 'cart'    
         managed = True
-
-
-
-
-
-class PaymentStatus(models.Model):
     
-    paystat_id = models.AutoField(primary_key= True)
-    paystat = models.CharField(max_length= 250, blank= False, null= False, db_column='payment_status')
-
+        
+        
+class CartItems(models.Model):
+        
+    cart_item_id = models.AutoField(primary_key= True, db_column= 'cart_item_id')
+    cart = models.ForeignKey(Cart, related_name= 'items', on_delete=models.CASCADE, db_column= 'cart_id' )
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, db_column= 'prod_id')
+        
+    quantity = models.PositiveIntegerField(default= 1)
+    objects = ProductManager()
+    is_deleted = models.BooleanField(default=False)
+        
     class Meta:
-        db_table = 'payment_status'
+        db_table = 'cart_items'
         managed = True
+        
+        
+    # BUSINESS LOGIC:-    
+        
+    # Calculating the total price    
+    def get_total_price (self):
+        
+        return self.quantity * self.product.prod_price
+        
+             
+        # Override the save method to adjust the product quantity
+    def save(self, *args, **kwargs):
+        
+        if self.product.is_deleted:
+            raise ValueError("Cannot add deleted product to the cart")
+            
+        if self.pk is None:
+                
+            #Ensure the product has enough quantity:
+            if self.quantity > self.product.prod_quantity:
+                raise ValueError ("Not enough stock for this Product")
+                
+            self.product.prod_quantity -= self.quantity
+            self.product.save()
+                
+        super().save(*args, **kwargs)
 
+           
+    def delete(self, *args, **kwargs):
+            
+        # Add the quantity back to the product when the cart item is removed
+            
+        self.product.prod_quantity += self.quantity
+        self.product.save()
+                
+        super().delete(*args, **kwargs)
 
-
-
-      
-class ShippingMethod(models.Model):
-    
-    ship_method_id = models.AutoField(primary_key= True)
-    shipmnt_method = models.CharField(max_length= 500, blank= False, null= True, db_column='shipment_method')   
-    shipmnt_cost = models.FloatField(blank= False, null= False, db_column= 'shipment_cost')
-    
-    class Meta:
-        db_table = 'shipping_method'
-        managed = True
-
-
-
-
-
-class ShippingStatus (models.Model):
-    
-    ship_status_id = models.AutoField(primary_key= True)
-    shipmnt_status = models.CharField(max_length= 500, blank= False, null= False, db_column= 'shipment_status')
-    
-    class Meta:
-        db_table = 'shipping_status'
 
 
 
@@ -198,23 +197,46 @@ class Order(models.Model):
     # GENERAL KEYS
     order_id = models.AutoField(primary_key= True, db_column='order_id')
     user = models.ForeignKey(UserProfile, on_delete=models.CASCADE, db_column= 'user_id')
-    prod = models.ForeignKey(Product, on_delete=models.CASCADE, db_column= 'prod_id')
+    cart = models.ForeignKey(Cart, on_delete=models.CASCADE, db_column= 'cart_id')
     customer_email = models.EmailField(null= False, blank= False)
     
     # ORDER variables:
     order_placed_at = models.DateField(auto_now_add= True, null= False, blank= False, db_column='order_created_at')
-    order_total_amount = models.FloatField(db_column= 'total_amount')
-    order_stat = models.ForeignKey(OrderStatus, on_delete=models.CASCADE, db_column= 'order_status' )
-    order_notes = models.TextField(blank= True, null= True)
+    order_total_amount = models.FloatField(db_column= 'total_amount', blank= True, null= True)
+
+    # choices must be tuples
+    order_stat_list = [
+        ('pending', 'Pending'),
+        ('cancelled', 'Cancelled'),
+        ('confirmed', 'Confirmed'),
+        ('on the way', 'On the way'),
+        ('delivered', 'Delivered'),
+        ]
+    order_stat = models.CharField(max_length= 50, choices= order_stat_list, default= 'pending')
     
-    # PAYMENT KEYS:
-    paym_id = models.ForeignKey(PaymentMethod, on_delete=models.CASCADE, db_column= 'payment_method_id')
-    paystat = models.ForeignKey(PaymentStatus, on_delete=models.CASCADE, db_column= 'payment_status_id')
+    # PAYMENT:
+    pay_stat_list = [
+        ('pending', 'Pending'),
+        ('cancelled', 'Cancelled'),
+        ('confirmed', 'Confirmed'),
+    ]
+    pay_stat = models.CharField(max_length= 50, choices= pay_stat_list, default= 'pending')
     
-    # SHIPMENT KEYS:
-    ship_method = models.ForeignKey(ShippingMethod, on_delete=models.CASCADE, db_column= 'shipping_method_id')
-    ship_status = models.ForeignKey(ShippingStatus, on_delete= models.CASCADE, db_column= 'shipment_status_id')
+    pay_method_list = [
+        ('cash', 'Cash'),
+        ('credit/ debit card', 'Credit/Debit card'),
+        ('paypal', 'Paypal'),    
+    ]
+    pay_method = models.CharField(max_length= 50, choices= pay_method_list, default= 'cash')
     
+    # SHIPMENT: (dropping the Shipment tables and utilising the array for choices)
+    ship_method_list = [
+        ('standard', 'Standard'),
+        ('next day delivery', 'Next day delivery'),
+        ('same day delivery', ' Same day delivery'),
+    ]
+    ship_method = models.CharField(max_length= 50, choices= ship_method_list, default= 'standard')
+
     # REQUIRED VARIABLES:
     post_code = models.CharField(max_length= 500)
     deliv_add= models.TextField()
@@ -222,10 +244,28 @@ class Order(models.Model):
     # MISCELANIOUS OPTIONAL VARIABLE:
     deliv_instructions = models.TextField(blank = True, null = True)
     is_gift = models.BooleanField(default= False)
+    order_notes = models.TextField(blank= True, null= True)
+    
+    # SOFT DELETE:
+    objects = ProductManager()
+    is_deleted = models.BooleanField(default=False)
     
     class Meta:
         db_table = 'order'
         managed = True
+    
+    
+    def calculate_total_amount(self):
         
+        total = sum([ item.get_total_price() for item in self.cart.items.all() ])
+        self.order_total_amount = total
+        self.save()
+    
         
+    def delete(self, *args, **kwargs):
         
+        self.is_deleted = True
+        self.save()
+            
+            
+                
