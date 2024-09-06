@@ -159,7 +159,7 @@ class CartItems(models.Model):
         return self.quantity * self.product.prod_price
         
              
-        # Override the save method to adjust the product quantity
+    # Override the save method to adjust the product quantity
     def save(self, *args, **kwargs):
         
         if self.product.is_deleted:
@@ -176,7 +176,8 @@ class CartItems(models.Model):
                 
         super().save(*args, **kwargs)
 
-           
+   
+    # Delete:       
     def delete(self, *args, **kwargs):
             
         # Add the quantity back to the product when the cart item is removed
@@ -194,13 +195,13 @@ class CartItems(models.Model):
 # CRUD ORDER :  
 class Order(models.Model):
     
-    # GENERAL KEYS
+    # GENERAL KEYS:-
     order_id = models.AutoField(primary_key= True, db_column='order_id')
     user = models.ForeignKey(UserProfile, on_delete=models.CASCADE, db_column= 'user_id')
     cart = models.ForeignKey(Cart, on_delete=models.CASCADE, db_column= 'cart_id')
     customer_email = models.EmailField(null= False, blank= False)
     
-    # ORDER variables:
+    # ORDER variables:-
     order_placed_at = models.DateField(auto_now_add= True, null= False, blank= False, db_column='order_created_at')
     order_total_amount = models.FloatField(db_column= 'total_amount', blank= True, null= True)
 

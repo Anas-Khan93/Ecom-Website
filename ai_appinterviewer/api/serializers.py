@@ -4,7 +4,7 @@ from django.contrib.auth import authenticate
 from django.contrib.auth.models import User
 from django.contrib.auth.password_validation import validate_password
 from django_rest_passwordreset.tokens import get_token_generator
-from ai_appinterviewer.models import Category, UserProfile, Product, ProductsImages
+from ai_appinterviewer.models import Category, UserProfile, Product, ProductsImages, Cart, Order, CartItems
 import logging
 from django.core.files.storage import default_storage
 
@@ -378,10 +378,10 @@ class ProdCreationSerializer(serializers.ModelSerializer):
         instance.save()
         return instance
             
+            
 
 
-
- #CRUD PRODUCT IMAGES SERIALIZER   
+#CRUD PRODUCT IMAGES SERIALIZER   
 class ProdImageSerializer(serializers.ModelSerializer):
     
     class Meta:
@@ -430,11 +430,35 @@ class ProdImageSerializer(serializers.ModelSerializer):
         return instance
     
     
-   
+
+
+
+class CartItemSerializer(serializers.ModelSerializer):
+    
+    class Meta:
+        model=CartItems
+        fields = ['cart_id', 'user', 'created_at', 'items', 'total_amount']
+
+
+
+  
+class CartSerializer(serializers.ModelSerializer):
+    
+    class Meta:
+        fields = '__all__'
+        read_only_fields = ['cart_id']  
+
+       
+       
+       
+       
+       
+
     
 class OrderSerializer(serializers.ModelSerializer):
     
     class Meta:
+        model = Cart
         fields = '__all__'
         read_only_fields = ['order_id']
     
@@ -455,6 +479,8 @@ class OrderSerializer(serializers.ModelSerializer):
         
         if Product.objects.get(prod=prod):
             return data
+        
+  
         
         
         

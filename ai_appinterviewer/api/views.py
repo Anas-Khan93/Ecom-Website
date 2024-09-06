@@ -739,6 +739,7 @@ class ProductUpdateView(APIView):
                     'data': serializer.data
                     
                 }, status= status.HTTP_200_OK)
+                
             else:
                 return Response({
                     
@@ -936,12 +937,47 @@ class ProdImagesDelView(APIView):
 
 class CartView(APIView):
     
+    # CREATE
+    def post(self, request, pk):
+        
+        try:
+            cart_obj = Cart.objects.get(pk=pk)
+            serializer = CartSerializer(data= request.data)
+            
+            if serializer.is_valid():
+                #serializer.save()
+                
+                return Response ({
+                    
+                    'Status': 'Success',
+                    'data': serializer.data
+                    
+                }, status= status.HTTP_200_OK)
+                
+            else:
+                return Response ({
+                    
+                    'Status': 'failed',
+                    'Error message': serializer.errors
+                    
+                }, status= status.HTTP_400_BAD_REQUEST)
+                
+        except Cart.DoesNotExist:
+            return Response ({
+                
+                'Status': 'Failed',
+                'Error message': f'No cart with id {pk} found'
+                
+            }, status= status.HTTP_404_NOT_FOUND)
+    
+     
+    # READ
     def get(self, request, pk=None):
         
         if pk:
             
             cart_obj = Cart.objects.get(pk=pk) 
-            serializer = CartSerializer(ord_obj)
+            serializer = CartSerializer(cart_obj)
             
             try:
                 cart_obj = Cart.objects.get(pk=pk) 
@@ -974,4 +1010,65 @@ class CartView(APIView):
                 'data': serializer.data
                     
             }, status= status.HTTP_200_OK)
+
+
+    # UPDATE
+    def put(self, request, pk):
+        
+        try:
+            
+            cart_obj = Cart.objects.get(pk=pk)
+            serializer = CartSerializer(cart_obj, data= request.data , partial=True)
+            
+            if serializer.save():
+                serializer.save()
+                
+                return Response ({
+                    
+                    'Status': 'Success',
+                    'data': serializer.data
+                    
+                }, status= status.HTTP_200_OK)
+            
+            else:
+                return Response ({
+                    
+                    'Status': 'failed',
+                    'Error message': serializer.errors
+                    
+                }, status= status.HTTP_400_BAD_REQUEST)
+        except:
+            
+            return Response({
+                
+                'Status': 'Failed',
+                'Error message': f'No cart with id {pk} found'
+                
+            }, status= status.HTTP_404_NOT_FOUND)
+        
+     
+    # DELETE    
+    def delete(self, request, pk):
+        
+        try:
+            cart_obj= Cart.objects.get(pk=pk)
+            
+            cart_obj.delete()
+            
+            return Response ({
+                
+                'Status': 'Success',
+                'Message': f'Cart {pk} has deleted successfully'
+                
+            }, status= status.HTTP_200_OK)
+        
+        except Cart.DoesNotExist:
+            
+            return Response ({
+                
+                'Status': 'Failed',
+                'Error message': f'No cart with id {pk} found'
+                
+            }, status= status.HTTP_404_NOT_FOUND)
+            
 
