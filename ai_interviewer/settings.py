@@ -141,25 +141,25 @@ WSGI_APPLICATION = 'ai_interviewer.wsgi.application'
 SECRET_KEY = env('MY_SECRET_KEY', default= 'Found no secret key')
 
 
-DATABASES = {
-    'default': dj_database_url.parse(os.getenv('DATABASE_URL'))
-}
-
-
 # DATABASES = {
-#     'default': {
-#         'ENGINE': os.getenv("ENGINE", default=""),
-#         'NAME': os.getenv("NAME", default=""),
-#         'USER': os.getenv("USER", default=""),
-#         'PASSWORD': os.getenv("PASSWORD", default=""),
-#         'HOST' : os.getenv("HOST", default=""),
-#         'PORT' : os.getenv("PORT", default=""),
-#         'OPTIONS':{
-            
-#         },
-
-#     },
+#     'default': dj_database_url.parse(os.getenv('DATABASE_URL'))
 # }
+
+
+DATABASES = {
+    'default': {
+        'ENGINE': os.getenv("ENGINE", default=""),
+        'NAME': os.getenv("NAME", default=""),
+        'USER': os.getenv("USER", default=""),
+        'PASSWORD': os.getenv("PASSWORD", default=""),
+        'HOST' : os.getenv("HOST", default=""),
+        'PORT' : os.getenv("PORT", default=""),
+        'OPTIONS':{
+            
+        },
+
+    },
+}
 
 # Password validation
 # https://docs.djangoproject.com/en/5.0/ref/settings/#auth-password-validators

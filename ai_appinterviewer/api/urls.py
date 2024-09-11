@@ -28,15 +28,22 @@ urlpatterns = [
     path('admin/product-delete/<str:pk>', views.ProductDeleteView.as_view(), name= 'product_delete' ),
     
     
-    # CRUD PRODUCT IMGAES links:
+    # CRUD PRODUCT IMAGES links:
     path('admin/product-image-creation/', views.ProdImagesCreationView.as_view(), name= 'product_image_creation'),
     path('product-images/', views.ProdImagesListView.as_view(), name= 'product_images_view'),
     path('product-images/<str:pk>', views.ProdImagesSingleView.as_view(), name= 'product_image_view'),
-    path('product-images/update/', views.ProductUpdateView.as_view(), name= 'product_image_update'),
+    path('product-images/update/<str:pk>', views.ProductUpdateView.as_view(), name= 'product_image_update'),
     path('admin/product-images/delete/<str:pk>', views.ProductDeleteView.as_view(), name= 'product_image_delete'),
     
     
-    # CRUD ORDER 
+    # CRU CART links (Cart doesnot need to be deleted as its in pre-buying stage) :
+    path('cart-checkout-creation/', views.CartView.as_view(), name= 'cart_checkout_creation' ),
+    path('admin/cart-checkout/', views.CartView.as_view(), name= 'cart_checkout_all_views'),
+    path('cart-checkout/<str:pk>', views.CartView.as_view(), name= 'cart_checkout_view'),
+    path('cart-checkout/update/<str:pk>', views.CartView.as_view(), name= 'cart_checkout_update'),
+    
+    path('cart-checkout/<str:pk>', views.CartView.as_view(), name= 'cart_delete'),
+    path('cart-checkout/<str:pk>/cart-item/<str:item_pk>', views.CartView.as_view(), name= 'cart_delete_items'),
     
     
     # CRUD TRANSACTION

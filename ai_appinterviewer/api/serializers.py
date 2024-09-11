@@ -433,28 +433,101 @@ class ProdImageSerializer(serializers.ModelSerializer):
 
 
 
+# CartItemsSerializer will process all the items put into the cart made by the user and the Cart will do the rest
 class CartItemSerializer(serializers.ModelSerializer):
+    
+    product_name = serializers.CharField(source= 'product.prod_name', read_only= True)
+    product_price = serializers.FloatField(source= 'product.prod_price', read_only= True)
+    total_price = serializers.SerializerMethodField()
+    
     
     class Meta:
         model=CartItems
-        fields = ['cart_id', 'user', 'created_at', 'items', 'total_amount']
-
-
+        fields = ['cart_item_id', 'cart', 'product', 'product_name', 'product_price', 'quantity', 'total_price']
+        read_only_fields = ['cart_item_id']
+    
+    
+        
+    def get_total_price(self, obj):
+        return obj.get_total_price()
+    
+    
+    # IMPORTANT INFO: DRF looks for methods validate_fieldname for each field in the serializer. So DRF will pass the quantity as value to the method.
+    def validate_quantity(self, value):
+        
+        if value < 1:
+            return serializers.ValidationError("Quantity must be atleast 1")
+        
+        if self.instance and value > self.instance.product.prod_quantity:
+            return serializers.ValidationError("Not enough stock available")
+        
+        return value
+    
+    
+    def update(self, instance, validated_data):
+        
+        new_product = validated_data.get('product', instance.product)
+        new_quantity = validated_data.get('quantity', instance.quantity)
+        
+        if new_quantity > new_product.prod_quantity:
+            raise serializers.ValidationError("Not enough Stock !")
+        
+        if new_quantity == 0:
+            instance.delete()
+            
+        else:
+            instance.product = new_product
+            instance.quantity = new_quantity
+            
+            #Save it after storing it
+            instance.save()
+            
+        return instance        
+            
+                    
+        
 
   
+# Cart Serializer will process all the items put into the cart made by the user and the Cart
 class CartSerializer(serializers.ModelSerializer):
     
-    class Meta:
-        fields = '__all__'
-        read_only_fields = ['cart_id']  
-
-       
-       
-       
-       
-       
-
+    items = CartItemSerializer(many= True)
     
+    total_amount = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = Cart
+        fields = ['cart_id', 'user', 'created_at', 'items', 'total_amount']
+        read_only_fields = ['cart_id']
+        
+    # Calculate the total price for all the items
+    def get_total_price(self, obj):
+        total = sum ( [items.get_total_price() for items in obj.items.all() ])
+        
+        return total
+    
+    def validate(self, data):
+        
+        if not data['items']:
+            raise serializers.ValidationError("Cart is empty !")
+        return data
+    
+    def create (self, validated_data):
+        
+        # Extract items from validated_data
+        items_data = validated_data.pop('items', [])
+        
+        # Create the cart and then accept cart items
+        cart = Cart.objects.create(**validated_data)
+        
+        for item_data in items_data:
+            CartItems.objects.create(cart= cart, **item_data )
+    
+        
+        return cart           
+       
+
+# ****************INCOMPLETE**********************    
 class OrderSerializer(serializers.ModelSerializer):
     
     class Meta:
@@ -477,8 +550,8 @@ class OrderSerializer(serializers.ModelSerializer):
         user = data.get('user')
         prod = data.get('prod')
         
-        if Product.objects.get(prod=prod):
-            return data
+        if not Product.objects.get(prod=prod):
+            return serializers.ValidationError("Product Does Not exist")
         
   
         

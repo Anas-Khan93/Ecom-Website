@@ -48,6 +48,9 @@ class Category(models.Model):
 
 
 
+
+
+
 # OVERRIDING THE PRODUCT MANAGER:
 ## To ensure soft_deleted objects are not returned in query
 
@@ -89,6 +92,9 @@ class Product(models.Model):
 
 
 
+
+
+
 # PRODUCT IMAGES MODEL: (to store product images)
 class ProductsImages(models.Model):
     
@@ -122,6 +128,8 @@ class ProductsImages(models.Model):
 
 
 
+
+
     # CART MODEL:
     
 class Cart(models.Model):
@@ -134,22 +142,25 @@ class Cart(models.Model):
         db_table = 'cart'    
         managed = True
     
+    
+    
         
         
 class CartItems(models.Model):
         
     cart_item_id = models.AutoField(primary_key= True, db_column= 'cart_item_id')
     cart = models.ForeignKey(Cart, related_name= 'items', on_delete=models.CASCADE, db_column= 'cart_id' )
-    product = models.ForeignKey(Product, on_delete=models.CASCADE, db_column= 'prod_id')
-        
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, db_column= 'prod_id')   
     quantity = models.PositiveIntegerField(default= 1)
+    
+    # Soft Delete
     objects = ProductManager()
     is_deleted = models.BooleanField(default=False)
         
     class Meta:
         db_table = 'cart_items'
         managed = True
-        
+    
         
     # BUSINESS LOGIC:-    
         
