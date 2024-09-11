@@ -142,8 +142,6 @@ class Cart(models.Model):
         db_table = 'cart'    
         managed = True
     
-    
-    
         
         
 class CartItems(models.Model):
@@ -152,10 +150,6 @@ class CartItems(models.Model):
     cart = models.ForeignKey(Cart, related_name= 'items', on_delete=models.CASCADE, db_column= 'cart_id' )
     product = models.ForeignKey(Product, on_delete=models.CASCADE, db_column= 'prod_id')   
     quantity = models.PositiveIntegerField(default= 1)
-    
-    # Soft Delete
-    objects = ProductManager()
-    is_deleted = models.BooleanField(default=False)
         
     class Meta:
         db_table = 'cart_items'
@@ -186,18 +180,6 @@ class CartItems(models.Model):
             self.product.save()
                 
         super().save(*args, **kwargs)
-
-   
-    # Delete:       
-    def delete(self, *args, **kwargs):
-            
-        # Add the quantity back to the product when the cart item is removed
-            
-        self.product.prod_quantity += self.quantity
-        self.product.save()
-                
-        super().delete(*args, **kwargs)
-
 
 
 

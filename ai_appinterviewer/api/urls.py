@@ -41,12 +41,11 @@ urlpatterns = [
     path('admin/cart-checkout/', views.CartView.as_view(), name= 'cart_checkout_all_views'),
     path('cart-checkout/<str:pk>', views.CartView.as_view(), name= 'cart_checkout_view'),
     path('cart-checkout/update/<str:pk>', views.CartView.as_view(), name= 'cart_checkout_update'),
-    
     path('cart-checkout/<str:pk>', views.CartView.as_view(), name= 'cart_delete'),
     path('cart-checkout/<str:pk>/cart-item/<str:item_pk>', views.CartView.as_view(), name= 'cart_delete_items'),
     
     
-    # CRUD TRANSACTION
+    # CRUD ORDER
     
     
     # MISCELLANNIOUS LINKS:

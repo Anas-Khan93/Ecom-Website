@@ -40,7 +40,12 @@ class RegisterView(APIView):
             
             if serializer.is_valid():
                 serializer.save()
-                return Response({"status":"success"}, status= status.HTTP_200_OK)
+                return Response({
+                    
+                    "status":"success",
+                    'data': serializer.data
+                    
+                }, status= status.HTTP_200_OK)
             else:
                 return Response({
                     
@@ -988,15 +993,25 @@ class CartView(APIView):
                 
         else:
             
-            carts = Cart.objects.all()
-            serializer = CartSerializer(carts, many= True)
+            try:
+                carts = Cart.objects.all()
+                serializer = CartSerializer(carts, many= True)
+                
+                return Response({
+                        
+                    'Status': 'Success',
+                    'data': serializer.data
+                        
+                }, status= status.HTTP_200_OK)
             
-            return Response({
+            except Cart.DoesNotExist:
+                return Response({
                     
-                'Status': 'Success',
-                'data': serializer.data
+                    'Status': 'Failed',
+                    'Error message': 'No carts exists'
                     
-            }, status= status.HTTP_200_OK)
+                }, status= status.HTTP_400_BAD_REQUEST)
+                
 
 
     # UPDATE (Products and their quantity from the cart)
@@ -1117,6 +1132,9 @@ class CartView(APIView):
                 
             }, status= status.HTTP_404_NOT_FOUND)
             
+
+
+
 
 
 # INCOMPLETE
