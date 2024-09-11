@@ -18,8 +18,9 @@ from django.core.mail import send_mail
 from django.utils.http import urlsafe_base64_decode
 from django.shortcuts import get_object_or_404
 from . import serializers
-from .. import models
-from ai_appinterviewer.models import UserProfile, Category, Product
+from ai_appinterviewer import models
+from ..models import Cart
+from ai_appinterviewer.models import UserProfile, Category, Product, Cart, CartItems
 from django.core.files.storage import default_storage
 import stripe
 
