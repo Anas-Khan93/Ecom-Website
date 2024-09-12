@@ -11,18 +11,13 @@ from django.core.files.storage import default_storage
 
 # CREATE USER
 class RegisterSerializer(serializers.ModelSerializer):
-    
-    # username = serializers.CharField(required=True, max_length=250)
-    # first_name = serializers.CharField( required=True, max_length=250)
-    # last_name = serializers.CharField( required=True, max_length=250)
-    # email = serializers.EmailField( required=True )
-    # password = serializers.CharField( write_only=True, required=True, validators=[validate_password])
 
     class Meta:
         
-        model=UserProfile
-        fields = '__all__'
-        read_only_fields = ['user', 'user_created_at']
+        model= User
+        
+        #fields that will be returned
+        fields = ['username', 'first_name', 'last_name', 'email', 'password']
         
            
     def validate_email(self,value):
@@ -38,6 +33,8 @@ class RegisterSerializer(serializers.ModelSerializer):
         
             
     def create(self,validated_data):
+        
+        # Create User instance
         user = User(
                               
             username = validated_data['username'],
@@ -50,17 +47,9 @@ class RegisterSerializer(serializers.ModelSerializer):
         user.save()         
                  
         # create a userprofile instance
-        user_profile = UserProfile.objects.create(
-            
-            user= user,
-            username=validated_data['username'],
-            first_name = validated_data['first_name'],
-            last_name = validated_data['last_name'],
-            email= validated_data['email'],
-            password= user.password  
-            )
+        user_profile = UserProfile.objects.create( user= user)
         
-        return user_profile
+        return user
 
 
 

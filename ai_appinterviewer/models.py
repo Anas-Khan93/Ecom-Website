@@ -14,14 +14,6 @@ import os
 class UserProfile(models.Model):
     
     user = models.OneToOneField(User, on_delete=models.CASCADE, primary_key=True)
-    
-    #defining the model fields here
-
-    username = models.CharField(max_length=250)
-    first_name = models.CharField(max_length=250)
-    last_name = models.CharField(max_length=250)
-    email = models.EmailField(unique=True)  
-    password = models.CharField(max_length=128)
     user_created_at = models.DateTimeField(auto_now_add=True, null= False, blank= False)
 
     class Meta:
