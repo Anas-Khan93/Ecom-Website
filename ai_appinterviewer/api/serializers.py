@@ -52,6 +52,7 @@ class RegisterSerializer(serializers.ModelSerializer):
         # create a userprofile instance
         user_profile = UserProfile.objects.create(
             
+            user= user,
             username=validated_data['username'],
             first_name = validated_data['first_name'],
             last_name = validated_data['last_name'],
