@@ -4,7 +4,7 @@ from django.contrib.auth import authenticate
 from django.contrib.auth.models import User
 from django.contrib.auth.password_validation import validate_password
 from django_rest_passwordreset.tokens import get_token_generator
-from ai_appinterviewer.models import Category, UserProfile, Product, ProductsImages, Cart, Order, CartItems
+from ..models import *
 import logging
 from django.core.files.storage import default_storage
 
