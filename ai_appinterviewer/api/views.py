@@ -53,8 +53,14 @@ class RegisterView(APIView):
                     'Error message': serializer.errors,
                     
                 }, status = status.HTTP_400_BAD_REQUEST)
-        except:
-            print("Exception occurred")
+        except Exception as e:
+            print( f"Exception occurred {e}")
+            return Response({
+                
+                'Status': 'Failed',
+                'Error message': 'An exception occurred while processing the request!'
+                
+            }, status= status.HTTP_500_INTERNAL_SERVER_ERROR)
  
                      
 class LoginView(APIView):
