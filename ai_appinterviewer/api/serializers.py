@@ -10,7 +10,7 @@ from django.core.files.storage import default_storage
 
 
 # CREATE USER
-class RegisterSerializer(serializers.Serializer):
+class RegisterSerializer(serializers.ModelSerializer):
     
     # username = serializers.CharField(required=True, max_length=250)
     # first_name = serializers.CharField( required=True, max_length=250)
