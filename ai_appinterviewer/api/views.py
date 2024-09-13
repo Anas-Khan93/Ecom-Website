@@ -61,7 +61,8 @@ class RegisterView(APIView):
                 'Error message': 'An exception occurred while processing the request!'
                 
             }, status= status.HTTP_500_INTERNAL_SERVER_ERROR)
- 
+            
+             
                      
 class LoginView(APIView):
     permission_classes = [AllowAny]

@@ -29,7 +29,7 @@ class Category(models.Model):
         
         #define the fields here
     cat_id= models.AutoField(primary_key=True)
-    cat_parent_id= models.IntegerField ()
+    cat_parent_id= models.IntegerField (null= False, blank= False)
     cat_name = models.CharField(max_length=250)
         
     class Meta:

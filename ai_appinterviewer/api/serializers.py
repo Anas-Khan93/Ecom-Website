@@ -332,7 +332,7 @@ class ProdCreationSerializer(serializers.ModelSerializer):
         prod_name = data.get('prod_name')
         
         # CHECK IF A CATEGORY WITH ID USER GAVE EXISTS
-        if not Category.objects.filter(cat=cat).exists():
+        if not Category.objects.filter(cat_id=cat).exists():
             raise serializer.ValidationError(f"Category with id:{cat} doesnot exist")
         
         # CHECK IF A PRODUCT WITH SAME NAME ALREADY EXISTS
