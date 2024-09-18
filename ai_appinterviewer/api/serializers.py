@@ -17,7 +17,8 @@ class RegisterSerializer(serializers.ModelSerializer):
         model= User
         
         #fields that will be returned
-        fields = ['username', 'first_name', 'last_name', 'email', 'password']
+        fields = ('user_id','username', 'first_name', 'last_name', 'email', 'password')
+        read_only_fields = ["user_id"]
         
            
     def validate_email(self,value):
@@ -332,7 +333,7 @@ class ProdCreationSerializer(serializers.ModelSerializer):
         prod_name = data.get('prod_name')
         
         # CHECK IF A CATEGORY WITH ID USER GAVE EXISTS
-        if not Category.objects.filter(cat_id=cat).exists():
+        if not Category.objects.filter(cat_id=cat.cat_id).exists():
             raise serializer.ValidationError(f"Category with id:{cat} doesnot exist")
         
         # CHECK IF A PRODUCT WITH SAME NAME ALREADY EXISTS
@@ -340,11 +341,12 @@ class ProdCreationSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("Product already exists in that category!")
         
         # return the validated data back to the view
+
         return data
     
         
     def create(self, validated_data):
-        
+
         prod = Product.objects.create(
             
             cat= validated_data['cat'],
@@ -354,6 +356,8 @@ class ProdCreationSerializer(serializers.ModelSerializer):
             prod_descr= validated_data['prod_descr']
             
         )
+        
+        print("prod= ",prod)
         
         return prod
     
@@ -431,27 +435,39 @@ class CartItemSerializer(serializers.ModelSerializer):
     product_name = serializers.CharField(source= 'product.prod_name', read_only= True)
     product_price = serializers.FloatField(source= 'product.prod_price', read_only= True)
     total_price = serializers.SerializerMethodField()
-    
+    cart = serializers.PrimaryKeyRelatedField(read_only= True)
     
     class Meta:
         model=CartItems
-        fields = ['cart_item_id', 'cart', 'product', 'product_name', 'product_price', 'quantity', 'total_price']
-        read_only_fields = ['cart_item_id']
+        fields = ['cart_item_id', 'cart' ,'product', 'product_name', 'product_price', 'quantity', 'total_price']
+        read_only_fields = ['cart_item_id', 'cart']
     
     
         
     def get_total_price(self, obj):
-        return obj.get_total_price()
+        
+        # handling case when 'obj' is a model instance (during serialization)
+        
+        if isinstance(obj, CartItems):
+            product_price = obj.product.prod_price
+            quantity = obj.quantity
+            
+        # Handling case when 'obj' is a dictionary (during deserialization)
+        else:
+            product_price= obj['product'].prod_price
+            quantity= obj['quantity']
+
+        return product_price * quantity
     
     
     # IMPORTANT INFO: DRF looks for methods validate_fieldname for each field in the serializer. So DRF will pass the quantity as value to the method.
     def validate_quantity(self, value):
         
         if value < 1:
-            return serializers.ValidationError("Quantity must be atleast 1")
+            raise serializers.ValidationError("Quantity must be atleast 1")
         
         if self.instance and value > self.instance.product.prod_quantity:
-            return serializers.ValidationError("Not enough stock available")
+            raise serializers.ValidationError("Not enough stock available")
         
         return value
     
@@ -483,40 +499,54 @@ class CartItemSerializer(serializers.ModelSerializer):
 # Cart Serializer will process all the items put into the cart made by the user and the Cart
 class CartSerializer(serializers.ModelSerializer):
     
-    items = CartItemSerializer(many= True)
-    
+    items = CartItemSerializer(many=True)
     total_amount = serializers.SerializerMethodField()
-    
+
     class Meta:
         model = Cart
         fields = ['cart_id', 'user', 'created_at', 'items', 'total_amount']
         read_only_fields = ['cart_id']
-        
+
     # Calculate the total price for all the items
-    def get_total_price(self, obj):
-        total = sum ( [items.get_total_price() for items in obj.items.all() ])
+    def get_total_amount(self, obj):  # Fix the method name to match your field name
+         
         
-        return total
-    
+        items = obj['items']  # Use obj.items.all() to get all cart items
+        
+        for item in items:
+            print("I am product: ",item['product'].prod_price)
+            print("I am quantity: ", item['quantity'])
+            
+        total = sum([item['product'].prod_price * item['quantity'] for item in items])
+        print("Total: ", total)
+        return total  
+
     def validate(self, data):
-        
-        if not data['items']:
-            raise serializers.ValidationError("Cart is empty !")
+        if not data.get('items'):
+            raise serializers.ValidationError("Cart is empty!")
         return data
-    
-    def create (self, validated_data):
+
+    def create(self, validated_data):
+        # Extract the items from the validated_data
+        items_data = validated_data.pop('items')
         
-        # Extract items from validated_data
-        items_data = validated_data.pop('items', [])
+        # print Debugging statements
+        print(f"Validated Data: {validated_data}")
+        print(f"Items Data: {items_data}")
         
-        # Create the cart and then accept cart items
+        # Create the Cart
         cart = Cart.objects.create(**validated_data)
         
+        # More Debugging
+        print(f"Created Cart: {cart}")
+
+        # Create the CartItems and associate them with the Cart
         for item_data in items_data:
-            CartItems.objects.create(cart= cart, **item_data )
-    
-        
-        return cart           
+            print(f"Item Data before CartItem creation: {item_data}")
+            CartItems.objects.create(cart=cart, **item_data)  # Explicitly set the cart here
+
+        return cart
+
        
 
 # ****************INCOMPLETE**********************    

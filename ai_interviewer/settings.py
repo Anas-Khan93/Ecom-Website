@@ -141,11 +141,15 @@ WSGI_APPLICATION = 'ai_interviewer.wsgi.application'
 SECRET_KEY = env('MY_SECRET_KEY', default= 'Found no secret key')
 
 
+
+#************AZURE DATABASE****************
+
 DATABASES = {
     'default': dj_database_url.parse(os.getenv('DATABASE_URL'))
 }
 
 
+# # ************LOCAL DATABASE****************
 # DATABASES = {
 #     'default': {
 #         'ENGINE': os.getenv("ENGINE", default=""),

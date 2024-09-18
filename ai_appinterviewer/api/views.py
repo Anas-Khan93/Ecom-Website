@@ -106,8 +106,9 @@ class LoginView(APIView):
 
 class UserListView(APIView):
     
-    permission_classes= [IsAdminUser, IsAuthenticated]
-    authentication_classes = [JWTAuthentication]
+    #permission_classes= [IsAdminUser, IsAuthenticated]
+    #authentication_classes = [JWTAuthentication]
+    permission_classes= [AllowAny]
 
     
     def get(self,request):
@@ -658,6 +659,7 @@ class ProdCreationView(APIView):
     def post (self, request):
         
         serializer = ProdCreationSerializer(data=request.data)
+        print(serializer)
         
         if serializer.is_valid():
             serializer.save()
@@ -954,8 +956,10 @@ class CartView(APIView):
     def post(self, request):
         
         serializer = CartSerializer(data= request.data)
+        print (serializer)
             
         if serializer.is_valid():
+            print(serializer.data)
             #serializer.save()
                 
             return Response ({
