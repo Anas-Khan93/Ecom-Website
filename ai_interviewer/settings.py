@@ -140,6 +140,9 @@ WSGI_APPLICATION = 'ai_interviewer.wsgi.application'
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = env('MY_SECRET_KEY', default= 'Found no secret key')
 
+STRIPE_KEY = os.getenv('strkey')
+STRIPE_WEBHOOK = os.getenv('signkey')
+
 
 
 #************AZURE DATABASE****************

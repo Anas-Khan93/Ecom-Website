@@ -161,14 +161,14 @@ class CartItems(models.Model):
         if self.product.is_deleted:
             raise ValueError("Cannot add deleted product to the cart")
             
-        if self.pk is None:
+        # if self.pk is None:
                 
-            #Ensure the product has enough quantity:
-            if self.quantity > self.product.prod_quantity:
-                raise ValueError ("Not enough stock for this Product")
+        #     #Ensure the product has enough quantity:
+        #     if self.quantity > self.product.prod_quantity:
+        #         raise ValueError ("Not enough stock for this Product")
                 
-            self.product.prod_quantity -= self.quantity
-            self.product.save()
+        #     self.product.prod_quantity -= self.quantity
+        #     self.product.save()
                 
         super().save(*args, **kwargs)
 

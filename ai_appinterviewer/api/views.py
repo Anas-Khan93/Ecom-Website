@@ -1,3 +1,5 @@
+import json
+import stripe
 from rest_framework import status
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.response import Response
@@ -6,6 +8,7 @@ from rest_framework.permissions import AllowAny, IsAuthenticated, IsAdminUser
 #from rest_framework.authentication import TokenAuthentication
 from rest_framework.authtoken.models import Token
 from django.shortcuts import render
+from django.conf import settings
 import requests
 import pprint
 from django.contrib.auth import authenticate
@@ -17,9 +20,15 @@ from django.conf import settings
 from django.core.mail import send_mail
 from django.utils.http import urlsafe_base64_decode
 from django.shortcuts import get_object_or_404
+import os
+from django.utils.decorators import method_decorator
+
+from django.views.decorators.csrf import csrf_exempt
 
 from .serializers import *
 from ..models import *
+
+
 
 from django.core.files.storage import default_storage
 import stripe
@@ -952,22 +961,92 @@ class ProdImagesDelView(APIView):
 
 class CartView(APIView):
     
+    stripe.api_key= settings.STRIPE_KEY
+    
+    
+    
     # CREATE
     def post(self, request):
+        
+        
         
         serializer = CartSerializer(data= request.data)
         print (serializer)
             
         if serializer.is_valid():
-            print(serializer.data)
-            #serializer.save()
+
+            
+            # NEED TO SAVE THE SERIALIZER AFTER DONE WITH TESTING
+            # cart= serializer.validated_data
+            
+            cart= serializer.save()
+            print("Its me the CART: ",cart)
+            # items = cart['items']
+            
                 
-            return Response ({
+            line_items = []
+            
+            for  item in cart.items.all():
+                #product_name = item['product'].prod_name
+                product_name = item.product.prod_name
+                #product_price = item['product'].prod_price
+                product_price = item.product.prod_price
+                #quantity = item['quantity']
+                quantity = item.quantity
+
+                line_items.append({
                     
-                'Status': 'Success',
-                'data': serializer.data
+                    'price_data': {
+                        
+                        'currency': 'usd',
+                        'product_data': {
+                            
+                            'name': product_name,
+                        },
+                        
+                        'unit_amount': int(product_price * 100),
+                    },
+                    'quantity': quantity, 
+                })
+                
+                # Call stripes payment session
+                
+                print("line_items: ", line_items)
+                
+            try:
+                
+                checkout_session = stripe.checkout.Session.create(
+                        
+                    payment_method_types = ['card'],
+                    line_items= line_items,
+                    mode= 'payment',
+                        
+                    # success_url = request.build_absolute_uri( reverse('payment_success')) + '?session_id={CHECKOUT_SESSION_ID}',
+                    # cancel_url = request.build_absolute_uri( reverse('payment_cancelled')),
                     
-            }, status= status.HTTP_201_CREATED)
+                    client_reference_id = cart.cart_id,
+                    
+                    success_url = request.build_absolute_uri('/') + '?session_id={CHECKOUT_SESSION_ID}',
+                    cancel_url = request.build_absolute_uri('/'),                           
+                )
+                    
+                    # Now return the Stripe session id to the frontend
+                return Response({
+                        
+                    'id': checkout_session.id,
+                    'stripe_checkout_url': checkout_session.url
+                        
+                }, status= status.HTTP_200_OK)
+                    
+                
+            except Exception as e:
+                return Response({
+                        
+                    'Status': 'Exception Occured',
+                    'Error message': str(e),
+                        
+                }, status= status.HTTP_400_BAD_REQUEST)
+            
                 
         else:
             return Response ({
@@ -976,6 +1055,7 @@ class CartView(APIView):
                 'Error message': serializer.errors
                     
             }, status= status.HTTP_400_BAD_REQUEST)
+
 
      
     # READ (the whole cart of all carts as admin)
@@ -1145,6 +1225,112 @@ class CartView(APIView):
             
 
 
+
+@method_decorator(csrf_exempt, name= 'dispatch')
+class StripeWebhookView(APIView):
+    
+    def post(self, request, *args, **kwargs):
+        payload =request.body
+        sig_header = request.META['HTTP_STRIPE_SIGNATURE'] 
+        endpoint_secret = settings.STRIPE_WEBHOOK
+        
+        
+        try:
+            event = stripe.Webhook.construct_event(
+                payload, sig_header, endpoint_secret
+            )
+        except ValueError as e:
+            # Ivalid response
+            
+            return Response({
+                
+                'Status': 'invalid payload'
+            }, status= status.HTTP_400_BAD_REQUEST)
+            
+        except stripe.error.SignatureVerificationError as e:
+            return Response({
+                
+                'Status': 'Invalid Signature'                
+            }, status= status.HTTP_400_BAD_REQUEST)
+            
+        
+        # Handle the event:
+        if event['type'] == 'checkout.session.completed':
+            session = event['data']['object']
+            return Response({
+                
+                'Status': 'success',
+                'Message': f"Payment for session {session['id']} was successfull.",
+                
+            }, status= status.HTTP_200_OK)
+        
+        elif event['type'] == 'payment_intent.payment_failed':
+            session = event['data']['object']
+            
+            #payment failed, update your order here
+            return Response({
+                
+                'Status': 'failed',
+                'Message': f"Payment failed for session {session['id']}.",
+                
+            }, status= status.HTTP_200_OK)   
+            
+        return Response({
+            
+            'Status': 'unhandled event types',
+            
+        }, status= status.HTTP_400_BAD_REQUEST) 
+        
+
+
+class PaymentSuccessView(APIView):
+    
+    def get(self, request, *args, **kwargs):
+        
+        session_id = request.GET.get('session_id')
+        
+        try:
+            # Retrieve the session from Stripe
+            session = stripe.checkout.Session.retrieve(session_id)
+            
+            # You can verify the payment status here:
+            
+            if session.payment_status == 'paid':
+                return Response({
+                    
+                    'Status': 'success',
+                    'Message': 'payment succeeded',
+                    'Session': session.id,
+                    
+                }, status= status.HTTP_200_OK )
+            
+            else:
+                return Response({
+                    
+                    'Status': 'failed',
+                    'Message': 'payment not confirmed'                   
+                    
+                }, status= status.HTTP_400_BAD_REQUEST)
+            
+        except Exception as e:
+            return Response({
+                
+                'status': 'failed',
+                'Error message': 'exception '+ str(e)+ ' has occured'               
+                
+            }, status= status.HTTP_424_FAILED_DEPENDENCY)
+            
+            
+class PaymentCancelledView(APIView):
+    
+    def get(self, request, *args, **kwargs):
+        
+        return Response({
+            
+            'Status': 'failed',
+            'Message': 'Payment Cancelled, please try again!'
+        }, status= status.HTTP_400_BAD_REQUEST)
+            
 
 
 
