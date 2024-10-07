@@ -140,6 +140,8 @@ WSGI_APPLICATION = 'ai_interviewer.wsgi.application'
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = env('MY_SECRET_KEY', default= 'Found no secret key')
 
+# *************STRIPE URls & KEYS*************
+
 STRIPE_KEY = os.getenv('strkey')
 STRIPE_WEBHOOK = os.getenv('signkey')
 STRIPE_WEBHOOK_URL = "https://ecom-stripe-function.azurewebsites.net/StripeWebhookView"

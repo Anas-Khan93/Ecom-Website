@@ -1237,110 +1237,20 @@ class StripeWebhookView(APIView):
     
     def post(self, request, *args, **kwargs):
         
-        payload =request.body
-        print("payload: ",payload)
+        # Forward request payload 
+        azure_function_url = settings.STRIPE_WEBHOOK_URL
+        response = requests.post(azure_function_url, data= request.body, headers= request.headers)
+        print("WE BE HERE")
         
-        sig_header = request.META['HTTP_STRIPE_SIGNATURE'] 
-        print("sig_header: ", sig_header)
+        # Return the response from the azure function
+        if response.status_code == 200:
+            print("WE GOOD")
+            return JsonResponse({ 'status': 'success' }, status= 200)
         
-        endpoint_secret = settings.STRIPE_WEBHOOK
-        print("endpoint_secret: ", endpoint_secret)
-        
-        
-        try:
-            event = stripe.Webhook.construct_event(
-                
-                payload, sig_header, endpoint_secret
-            )
-        except ValueError as e:
-            return HttpResponse("Invalid payload", status= 400)
-            
-        except stripe.error.SignatureVerificationError as e:
-            return HttpResponse("Invalid Signature", status= 400)
-            
-        
-        # Handle the event(if succeeded):
-        if event['type'] == 'checkout.session.completed':
-            
-            session = event['data']['object']
-            
-            # payment was successful so now we can find the cart and update the quantities in the product
-            cart_id = session['metadata'].get('cart_id')
-            print("cart_id :", cart_id)
-            
-            user_id = session['metadata'].get('user_id')
-            print("user_id :", user_id)
-            
-            total_amount = session['metadata'].get('total_amount')
-            
-            # Fetch the cart and items
-            cart_items = CartItems.objects.filter(cart_id= cart_id)
-            
-            # Remove the item_quantity from the product_quantity
-            for item in cart_items:
-                product = item.product
-                
-                #Deduct product quantity:
-                if item.quantity >product.prod_quantity:
-                    raise ValueError("Not enough stock for this product")
-                
-                product.prod_quantity -= item.quantity
-                product.save()
-                
-            # Create the order successful payment
-            self.create_order(user_id, cart_id, total_amount)
-                
-                
-            return HttpResponse("Payment successful", status= 200)
-            
-        # Handle the event (if failed):
-        elif event['type'] == 'payment_intent.payment_failed':
-            
-            session = event['data']['object']
-            return HttpResponse("Payment failed", status= 200)   
-            
-        return HttpResponse("Unhandled event type", status= 400)
+        else:
+            print("WE SCREWED")
+            return JsonResponse({ 'error': 'Something went wrong' }, status= response.status_code)
     
-    
-    def create_order(self, user_id, cart_id, total_amount):
-        
-        '''
-        CREATE AN ORDER AFTER PAYMENT IS CONFIRMED
-        '''
-
-        # Fetch the user based on user_id
-        user = get_object_or_404(User, id=user_id)
-        
-        # Fetching userprofile instance to make cart work:
-        userprofile = get_object_or_404(UserProfile, user_id = user_id)
-        
-        # Fetch cart instance based on cart_id
-        cart = get_object_or_404(Cart, pk=cart_id, user = userprofile)
-        
-        total= total_amount
-        
-        # EMPTY CART ERROR:
-        if not cart.items.exists():
-            return {'error':'Cart is empty'}
-        
-        # get the total amount from the cart
-        # total_amount= cart.total_amount
-        
-        # Now CREATE THE ORDER:
-        order = Order.objects.create(
-            
-            user= cart.user,
-            cart=cart,
-            customer_email=user.email,
-            order_total_amount= total,
-            post_code= "M146PN",
-            deliv_add= "Mulholand drive",          
-            
-        )
-        
-        print("I am order: ", order)
-        return order
-        
         
         
 

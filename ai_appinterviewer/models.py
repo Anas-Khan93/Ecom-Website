@@ -40,9 +40,6 @@ class Category(models.Model):
 
 
 
-
-
-
 # OVERRIDING THE PRODUCT MANAGER:
 ## To ensure soft_deleted objects are not returned in query
 
@@ -52,6 +49,8 @@ class ProductManager(models.Manager):
         
         # here what we want to is basically return only the data that has not been soft deleted
         return super().get_queryset().filter(is_deleted= False)
+
+
 
 
  
@@ -79,9 +78,6 @@ class Product(models.Model):
         
         self.is_deleted = True
         self.save()
-
-
-
 
 
 
@@ -123,6 +119,10 @@ class ProductsImages(models.Model):
 
 
     # CART MODEL:
+ 
+ 
+ 
+
     
 class Cart(models.Model):
         
@@ -133,7 +133,10 @@ class Cart(models.Model):
     class Meta:
         db_table = 'cart'    
         managed = True
-    
+
+
+
+ 
         
 class CartItems(models.Model):
         
