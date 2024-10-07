@@ -9,6 +9,7 @@ from rest_framework.permissions import AllowAny, IsAuthenticated, IsAdminUser
 from rest_framework.authtoken.models import Token
 from django.shortcuts import render
 from django.conf import settings
+from django.http import HttpResponse
 import requests
 import pprint
 from django.contrib.auth import authenticate
@@ -968,22 +969,24 @@ class CartView(APIView):
     # CREATE
     def post(self, request):
         
-        
-        
         serializer = CartSerializer(data= request.data)
         print (serializer)
-            
-        if serializer.is_valid():
+        
+        cartuser = serializer.initial_data['user']
+        print("cartuser: ",cartuser)
 
             
+        if serializer.is_valid():
             # NEED TO SAVE THE SERIALIZER AFTER DONE WITH TESTING
-            # cart= serializer.validated_data
+            #carttotal = serializer.validated_data
+            #print("cartotal: ",carttotal)
             
-            cart= serializer.save()
-            print("Its me the CART: ",cart)
+            cart = serializer.save()
+            
+            print("cart_items: ",cart.items)
+            
             # items = cart['items']
-            
-                
+            total= 0
             line_items = []
             
             for  item in cart.items.all():
@@ -993,6 +996,7 @@ class CartView(APIView):
                 product_price = item.product.prod_price
                 #quantity = item['quantity']
                 quantity = item.quantity
+                total += (product_price * quantity)
 
                 line_items.append({
                     
@@ -1010,22 +1014,24 @@ class CartView(APIView):
                 })
                 
                 # Call stripes payment session
-                
-                print("line_items: ", line_items)
+                print("total: ", total)
                 
             try:
-                
                 checkout_session = stripe.checkout.Session.create(
                         
                     payment_method_types = ['card'],
                     line_items= line_items,
-                    mode= 'payment',
-                        
+                    mode= 'payment',    
                     # success_url = request.build_absolute_uri( reverse('payment_success')) + '?session_id={CHECKOUT_SESSION_ID}',
                     # cancel_url = request.build_absolute_uri( reverse('payment_cancelled')),
+                    client_reference_id = cart.cart_id, # for cart_id
                     
-                    client_reference_id = cart.cart_id,
+                metadata= {
+                    'cart_id': cart.cart_id,
+                    'user_id': cartuser,
+                    'total_amount': total,
                     
+                    },
                     success_url = request.build_absolute_uri('/') + '?session_id={CHECKOUT_SESSION_ID}',
                     cancel_url = request.build_absolute_uri('/'),                           
                 )
@@ -1230,60 +1236,116 @@ class CartView(APIView):
 class StripeWebhookView(APIView):
     
     def post(self, request, *args, **kwargs):
+        
         payload =request.body
+        print("payload: ",payload)
+        
         sig_header = request.META['HTTP_STRIPE_SIGNATURE'] 
+        print("sig_header: ", sig_header)
+        
         endpoint_secret = settings.STRIPE_WEBHOOK
+        print("endpoint_secret: ", endpoint_secret)
         
         
         try:
             event = stripe.Webhook.construct_event(
+                
                 payload, sig_header, endpoint_secret
             )
         except ValueError as e:
-            # Ivalid response
-            
-            return Response({
-                
-                'Status': 'invalid payload'
-            }, status= status.HTTP_400_BAD_REQUEST)
+            return HttpResponse("Invalid payload", status= 400)
             
         except stripe.error.SignatureVerificationError as e:
-            return Response({
-                
-                'Status': 'Invalid Signature'                
-            }, status= status.HTTP_400_BAD_REQUEST)
+            return HttpResponse("Invalid Signature", status= 400)
             
         
-        # Handle the event:
+        # Handle the event(if succeeded):
         if event['type'] == 'checkout.session.completed':
+            
             session = event['data']['object']
-            return Response({
+            
+            # payment was successful so now we can find the cart and update the quantities in the product
+            cart_id = session['metadata'].get('cart_id')
+            print("cart_id :", cart_id)
+            
+            user_id = session['metadata'].get('user_id')
+            print("user_id :", user_id)
+            
+            total_amount = session['metadata'].get('total_amount')
+            
+            # Fetch the cart and items
+            cart_items = CartItems.objects.filter(cart_id= cart_id)
+            
+            # Remove the item_quantity from the product_quantity
+            for item in cart_items:
+                product = item.product
                 
-                'Status': 'success',
-                'Message': f"Payment for session {session['id']} was successfull.",
+                #Deduct product quantity:
+                if item.quantity >product.prod_quantity:
+                    raise ValueError("Not enough stock for this product")
                 
-            }, status= status.HTTP_200_OK)
-        
+                product.prod_quantity -= item.quantity
+                product.save()
+                
+            # Create the order successful payment
+            self.create_order(user_id, cart_id, total_amount)
+                
+                
+            return HttpResponse("Payment successful", status= 200)
+            
+        # Handle the event (if failed):
         elif event['type'] == 'payment_intent.payment_failed':
+            
             session = event['data']['object']
+            return HttpResponse("Payment failed", status= 200)   
             
-            #payment failed, update your order here
-            return Response({
-                
-                'Status': 'failed',
-                'Message': f"Payment failed for session {session['id']}.",
-                
-            }, status= status.HTTP_200_OK)   
+        return HttpResponse("Unhandled event type", status= 400)
+    
+    
+    def create_order(self, user_id, cart_id, total_amount):
+        
+        '''
+        CREATE AN ORDER AFTER PAYMENT IS CONFIRMED
+        '''
+
+        # Fetch the user based on user_id
+        user = get_object_or_404(User, id=user_id)
+        
+        # Fetching userprofile instance to make cart work:
+        userprofile = get_object_or_404(UserProfile, user_id = user_id)
+        
+        # Fetch cart instance based on cart_id
+        cart = get_object_or_404(Cart, pk=cart_id, user = userprofile)
+        
+        total= total_amount
+        
+        # EMPTY CART ERROR:
+        if not cart.items.exists():
+            return {'error':'Cart is empty'}
+        
+        # get the total amount from the cart
+        # total_amount= cart.total_amount
+        
+        # Now CREATE THE ORDER:
+        order = Order.objects.create(
             
-        return Response({
+            user= cart.user,
+            cart=cart,
+            customer_email=user.email,
+            order_total_amount= total,
+            post_code= "M146PN",
+            deliv_add= "Mulholand drive",          
             
-            'Status': 'unhandled event types',
-            
-        }, status= status.HTTP_400_BAD_REQUEST) 
+        )
+        
+        print("I am order: ", order)
+        return order
+        
+        
         
 
-
-class PaymentSuccessView(APIView):
+#  PAYMENT SUCCEEDED AND PAYMENT CANCELLED WILL NOT BE USED ONCE WEBHOOKS ARE EMPLOYED
+#class PaymentSuccessView(APIView):
     
     def get(self, request, *args, **kwargs):
         
@@ -1321,7 +1383,7 @@ class PaymentSuccessView(APIView):
             }, status= status.HTTP_424_FAILED_DEPENDENCY)
             
             
-class PaymentCancelledView(APIView):
+#class PaymentCancelledView(APIView):
     
     def get(self, request, *args, **kwargs):
         
@@ -1335,25 +1397,3 @@ class PaymentCancelledView(APIView):
 
 
 # INCOMPLETE
-class OrderView(APIView):
-    
-    def post(self, request):
-        serializer = OrderSerializer(data= request.data)
-        
-        if serializer.is_valid():
-            #serializer.save()
-            
-            return Response({
-                
-                'Status': 'Success',
-                'data': serializer.data
-                
-            }, status= status.HTTP_200_OK)
-            
-        else:
-            return Response({
-                
-                'Status': 'Failed',
-                'Error message': serializer.errors
-                
-            }, status= status.HTTP_400_BAD_REQUEST)

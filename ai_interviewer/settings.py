@@ -142,6 +142,7 @@ SECRET_KEY = env('MY_SECRET_KEY', default= 'Found no secret key')
 
 STRIPE_KEY = os.getenv('strkey')
 STRIPE_WEBHOOK = os.getenv('signkey')
+STRIPE_WEBHOOK_URL = "https://ecom-stripe-function.azurewebsites.net/StripeWebhookView"
 
 
 

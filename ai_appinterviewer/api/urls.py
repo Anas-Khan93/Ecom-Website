@@ -1,6 +1,9 @@
 from django.urls import path, include
+from django.http import HttpResponse
 from django.contrib.auth import views as auth_views
 from . import views
+
+# TRYING A FUNCTION TO RETURN HTTPRESPONSE SIMILAR TO HOME URL
 
 urlpatterns = [
     
@@ -45,8 +48,8 @@ urlpatterns = [
     path('cart-checkout/<str:pk>/cart-item/<str:item_pk>', views.CartView.as_view(), name= 'cart_delete_items'),
     
     # CART_CHECKOUT_SUCCESS & CART_CHECKOUT_FAIL LINKS:
-    path('payment_success/', views.PaymentSuccessView.as_view(), name= 'payment_success'),
-    path('payment_cancelled/', views.PaymentCancelledView.as_view(), name= 'payment_cancelled'),
+    #path('payment_success/', views.PaymentSuccessView.as_view(), name= 'payment_success'),
+    #path('payment_cancelled/', views.PaymentCancelledView.as_view(), name= 'payment_cancelled'),
     
     path('webhook/stripe/', views.StripeWebhookView.as_view(), name= 'Stripe webhook'),
     

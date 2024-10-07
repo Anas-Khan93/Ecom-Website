@@ -199,37 +199,13 @@ class Order(models.Model):
         ]
     order_stat = models.CharField(max_length= 50, choices= order_stat_list, default= 'pending')
     
-    # PAYMENT:
-    pay_stat_list = [
-        ('pending', 'Pending'),
-        ('cancelled', 'Cancelled'),
-        ('confirmed', 'Confirmed'),
-    ]
-    pay_stat = models.CharField(max_length= 50, choices= pay_stat_list, default= 'pending')
-    
-    pay_method_list = [
-        ('cash', 'Cash'),
-        ('credit/ debit card', 'Credit/Debit card'),
-        ('paypal', 'Paypal'),    
-    ]
-    pay_method = models.CharField(max_length= 50, choices= pay_method_list, default= 'cash')
-    
-    # SHIPMENT: (dropping the Shipment tables and utilising the array for choices)
-    ship_method_list = [
-        ('standard', 'Standard'),
-        ('next day delivery', 'Next day delivery'),
-        ('same day delivery', ' Same day delivery'),
-    ]
-    ship_method = models.CharField(max_length= 50, choices= ship_method_list, default= 'standard')
 
     # REQUIRED VARIABLES:
     post_code = models.CharField(max_length= 500)
     deliv_add= models.TextField()
     
     # MISCELANIOUS OPTIONAL VARIABLE:
-    deliv_instructions = models.TextField(blank = True, null = True)
-    is_gift = models.BooleanField(default= False)
-    order_notes = models.TextField(blank= True, null= True)
+    is_gift = models.BooleanField(default= False)   
     
     # SOFT DELETE:
     objects = ProductManager()
@@ -239,13 +215,7 @@ class Order(models.Model):
         db_table = 'order'
         managed = True
     
-    
-    def calculate_total_amount(self):
-        
-        total = sum([ item.get_total_price() for item in self.cart.items.all() ])
-        self.order_total_amount = total
-        self.save()
-    
+
         
     def delete(self, *args, **kwargs):
         
